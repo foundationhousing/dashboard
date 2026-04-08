@@ -307,6 +307,28 @@ body {
   padding: 3px 6px !important;
 }
 
+/* ---------- Chip / Pill Toggles ---------- */
+.chip-group { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid var(--border-accent);
+  background: var(--bg-surface-1);
+  color: var(--text-secondary);
+  transition: all 150ms ease;
+  user-select: none;
+}
+.chip:hover { border-color: var(--accent-coral); color: var(--text-primary); }
+.chip.active {
+  background: var(--accent-coral-dim);
+  border-color: var(--accent-coral);
+  color: var(--accent-coral);
+  font-weight: 600;
+}
+
 /* ---------- Unavailable ---------- */
 .unavailable {
   background: var(--bg-surface-2);
@@ -572,7 +594,8 @@ body {
   </div>
   <div class="filter-group">
     <label>Campus</label>
-    <select id="filterCampus" class="filter-input" multiple style="min-width:140px;height:30px;"></select>
+    <div id="filterCampus" class="chip-group"></div>
+    <span id="campusClear" style="font-size:10px;color:var(--text-muted);cursor:pointer;margin-left:4px;" onclick="document.querySelectorAll('#filterCampus .chip').forEach(c=>c.classList.remove('active'));STATE.campuses=[];updateFilterBadge();refresh();">clear</span>
   </div>
   <div class="filter-toggle">
     <input type="checkbox" id="filterStable"/>
@@ -581,6 +604,10 @@ body {
   <div class="filter-toggle">
     <input type="checkbox" id="filterFoundationized"/>
     <label for="filterFoundationized">F-ized</label>
+  </div>
+  <div class="filter-toggle">
+    <input type="checkbox" id="filterOnlineOnly"/>
+    <label for="filterOnlineOnly">Online only</label>
   </div>
   <div class="filter-group">
     <input id="filterPropSearch" type="text" class="filter-input" placeholder="Search properties..." style="min-width:140px;"/>
@@ -747,6 +774,7 @@ const STATE = {
   propertySearch: '',
   selectedPropertyId: null,
   showOffline: false,
+  onlineOnly: false,
 };
 
 // =========================================================================
@@ -923,23 +951,32 @@ function initFilters() {
   // Set as-of to default (no user-facing date picker)
   STATE.asof = defaultAsOf;
 
-  // Populate campus
+  // Populate campus chips
   const allCampuses = [...new Set((leasing.kpis || []).map(r => r.campus).filter(Boolean).filter(c => c !== 'ALL'))].sort();
+  const campusDiv = document.getElementById('filterCampus');
   allCampuses.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c; opt.textContent = c;
-    filterCampus.appendChild(opt);
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = c;
+    chip.dataset.campus = c;
+    chip.onclick = function() {
+      this.classList.toggle('active');
+      STATE.campuses = Array.from(campusDiv.querySelectorAll('.chip.active')).map(el => el.dataset.campus);
+      updateFilterBadge();
+      refresh();
+    };
+    campusDiv.appendChild(chip);
   });
 
   // Wire events
   document.getElementById('filterYear').addEventListener('change', function() { STATE.year = this.value; refresh(); });
-  filterCampus.addEventListener('change', () => {
-    STATE.campuses = Array.from(filterCampus.selectedOptions).map(o => o.value);
-    updateFilterBadge();
-    refresh();
-  });
   filterStable.addEventListener('change', () => { STATE.stableOnly = filterStable.checked; refresh(); });
   filterFoundationized.addEventListener('change', () => { STATE.foundationizedOnly = filterFoundationized.checked; refresh(); });
+
+  document.getElementById('filterOnlineOnly').addEventListener('change', function() {
+    STATE.onlineOnly = this.checked;
+    refresh();
+  });
 
   const toggleOffline = document.getElementById('toggleOffline');
   if (toggleOffline) toggleOffline.addEventListener('change', () => { STATE.showOffline = toggleOffline.checked; buildPropertyTable(); });
@@ -974,7 +1011,7 @@ function updateFilterBadge() {
 
 function clearCampusFilter() {
   STATE.campuses = [];
-  document.getElementById('filterCampus').selectedIndex = -1;
+  document.querySelectorAll('#filterCampus .chip').forEach(c => c.classList.remove('active'));
   updateFilterBadge();
   refresh();
 }
@@ -1165,7 +1202,7 @@ function renderOverview() {
       increasing: { marker: { color: '#34d399' } },
       decreasing: { marker: { color: '#ff6b6b' } },
       totals: { marker: { color: '#7a7a90' } },
-      textposition: 'outside',
+      textposition: 'auto',
       text: [
         bigMoney(cm.re_income_value),
         bigMoney(cm.senior_debt || 0),
@@ -1177,11 +1214,12 @@ function renderOverview() {
         bigMoney(cm.common_equity_adjusted || 0)
       ],
       textfont: { family: 'JetBrains Mono', size: 10, color: '#e8e8ed' },
-    }], pLayout({ margin: { t: 30, b: 120 }, yaxis: { title: '', gridcolor: 'rgba(255,255,255,0.04)' },
+    }], pLayout({ margin: { t: 30, r: 16, b: 140, l: 70 }, yaxis: { title: '', gridcolor: 'rgba(255,255,255,0.04)' },
+      uniformtext: { mode: 'hide', minsize: 9 },
       annotations: [{
         text: 'Book Value: Common Equity = ' + bigMoney(cm.common_equity_book_adjusted || cm.common_equity_book_gross || 0) + ' (cost basis underwater)',
         xref: 'paper', yref: 'paper',
-        x: 0.5, y: -0.18,
+        x: 0.5, y: -0.25,
         showarrow: false,
         font: { family: 'JetBrains Mono', size: 11, color: '#ff6b6b' },
         align: 'center'
@@ -1310,7 +1348,8 @@ function renderOverview() {
 
 let overviewLeasingTable = null;
 function renderOverviewLeasingTable() {
-  const lsData = leasing.leasing_summary || [];
+  let lsData = leasing.leasing_summary || [];
+  if (STATE.campuses.length > 0) lsData = lsData.filter(r => STATE.campuses.includes(r.campus));
   if (!lsData.length) {
     document.getElementById('overview-leasing-table').innerHTML = '<div class="unavailable">Leasing summary not available</div>';
     return;
@@ -1391,7 +1430,7 @@ function refreshLeasingKpis() {
   // LS-05: Price Realization
   el.appendChild(kpiCard('Price Realization',
     safe(agg.priceReal) !== null ? fmtRatio(agg.priceReal) : '\u2014',
-    safe(agg.actualAvg) !== null && safe(agg.targAvg) !== null ? bigMoney(agg.actualAvg) + ' vs ' + bigMoney(agg.targAvg) + ' target' : ''
+    safe(agg.actualAvg) !== null && safe(agg.targAvg) !== null ? bigMoney(agg.actualAvg) + ' vs ' + bigMoney(agg.targAvg) + ' target' : (safe(agg.priceReal) === null ? 'Requires target bed-month pricing data' : '')
   ));
   // LS-06: Signed Net Revenue vs Target
   el.appendChild(kpiCard('Revenue vs Target',
@@ -1408,7 +1447,7 @@ function refreshLeasingKpis() {
   // LS-08: Same Property Price YoY
   el.appendChild(kpiCard('Price YoY',
     spDelta !== null ? deltaHtml(spDelta, v => fmtPct(Math.abs(v)), false) : '\u2014',
-    safe(agg.spRatio) !== null ? 'Ratio: ' + fmtRatio(agg.spRatio) : ''
+    safe(agg.spRatio) !== null ? 'Ratio: ' + fmtRatio(agg.spRatio) : (spDelta === null ? 'Requires prior year data' : '')
   ));
   // LS-09: Leasing Velocity
   el.appendChild(kpiCard('Velocity',
@@ -1602,10 +1641,26 @@ function buildPropertyTable() {
     filtered = filtered.filter(r => (r.property_name || '').toLowerCase().includes(q) || (r.campus || '').toLowerCase().includes(q));
   }
   // Filter offline properties for selected year (default: hide)
+  const offlineIds = new Set((projections.property_detail || [])
+    .filter(r => r.ay2627_offline).map(r => r.property_id));
   if (!STATE.showOffline) {
-    const offlineIds = new Set((projections.property_detail || [])
-      .filter(r => r.ay2627_offline).map(r => r.property_id));
     filtered = filtered.filter(r => !offlineIds.has(r.property_id));
+  }
+
+  // Enrich with online_status from availability data or projections
+  const managedIds = new Set((projections.property_detail || [])
+    .filter(r => r.ownership_type === 'Managed').map(r => r.property_id));
+  filtered = filtered.map(r => {
+    let status = '\u2014';
+    if (managedIds.has(r.property_id)) status = 'managed';
+    else if (offlineIds.has(r.property_id)) status = 'offline';
+    else status = 'online';
+    return Object.assign({}, r, { online_status: status });
+  });
+
+  // Apply onlineOnly filter
+  if (STATE.onlineOnly) {
+    filtered = filtered.filter(r => r.online_status === 'online');
   }
 
   if (propTable) { propTable.destroy(); propTable = null; }
@@ -1618,6 +1673,15 @@ function buildPropertyTable() {
     columns: [
       { title: 'Campus', field: 'campus', headerFilter: true, minWidth: 100, frozen: true },
       { title: 'Property', field: 'property_name', headerFilter: true, minWidth: 160, frozen: true },
+      { title: 'Status', field: 'online_status', headerFilter: true, width: 80, hozAlign: 'center',
+        formatter: function(cell) {
+          const v = cell.getValue();
+          if (v === 'online') return '<span style="color:#34d399;">\u25CF</span> On';
+          if (v === 'offline') return '<span style="color:#ff6b6b;">\u25CF</span> Off';
+          if (v === 'managed') return '<span style="color:#fbbf24;">\u25CF</span> Mgd';
+          return v || '\u2014';
+        }
+      },
       { title: 'Stable', field: 'is_stable', hozAlign: 'center', width: 70,
         formatter: c => { const v = c.getValue(); return v === true ? '<span style="color:var(--success)">&#9679;</span>' : v === false ? '<span style="color:var(--text-muted)">&#9675;</span>' : '\u2014'; } },
       { title: 'F-ized', field: 'is_foundationized', hozAlign: 'center', width: 70,
@@ -1673,8 +1737,12 @@ function renderConstruction() {
 
   el.innerHTML = html;
 
+  // Apply campus filter to construction data
+  const cxCampusFilter = STATE.campuses.length > 0 ? STATE.campuses : null;
+
   // Status distribution stacked horizontal bar
-  const statusData = construction.status_counts || [];
+  let statusData = construction.status_counts || [];
+  if (cxCampusFilter) statusData = statusData.filter(r => cxCampusFilter.includes(r.campus));
   if (statusData.length) {
     const campuses = [...new Set(statusData.map(r => r.campus))].sort();
     const statuses = [...new Set(statusData.map(r => r.construction_status || 'Unknown'))];
@@ -1697,7 +1765,8 @@ function renderConstruction() {
   }
 
   // Reno tier stacked bar
-  const renoData = construction.reno_counts || [];
+  let renoData = construction.reno_counts || [];
+  if (cxCampusFilter) renoData = renoData.filter(r => cxCampusFilter.includes(r.campus));
   if (renoData.length) {
     const campuses = [...new Set(renoData.map(r => r.campus))].sort();
     const tiers = [...new Set(renoData.map(r => r.reno_tier || 'Unknown'))];
@@ -1720,7 +1789,8 @@ function renderConstruction() {
   }
 
   // Deadlines table
-  const dlData = construction.deadlines || [];
+  let dlData = construction.deadlines || [];
+  if (cxCampusFilter) dlData = dlData.filter(r => cxCampusFilter.includes(r.campus));
   if (dlData.length) {
     new Tabulator('#table-cx-deadlines', {
       data: dlData,
@@ -1750,7 +1820,8 @@ function renderConstruction() {
   }
 
   // Needs review table
-  const nrData = construction.needs_review || [];
+  let nrData = construction.needs_review || [];
+  if (cxCampusFilter) nrData = nrData.filter(r => cxCampusFilter.includes(r.campus));
   if (nrData.length) {
     new Tabulator('#table-cx-review', {
       data: nrData,
@@ -1806,8 +1877,12 @@ function renderCapital() {
   kpiEl.appendChild(kpiCard('Combined Debt', bigMoney(capital.combined)));
   kpiEl.appendChild(kpiCard('Investor Count', capital.investor_count != null ? String(capital.investor_count) : '\u2014'));
 
+  // Apply campus filter to capital data
+  const capCampusFilter = STATE.campuses.length > 0 ? STATE.campuses : null;
+
   // Senior by campus bar
-  const scData = capital.senior_by_campus || [];
+  let scData = capital.senior_by_campus || [];
+  if (capCampusFilter) scData = scData.filter(r => capCampusFilter.includes(r.campus));
   if (scData.length) {
     const sorted = [...scData].sort((a,b) => (b.balance||0) - (a.balance||0));
     Plotly.newPlot('chart-cap-senior', [{
@@ -1846,7 +1921,8 @@ function renderCapital() {
   }
 
   // Senior detail table
-  const sdData = capital.senior_detail || [];
+  let sdData = capital.senior_detail || [];
+  if (capCampusFilter) sdData = sdData.filter(r => capCampusFilter.includes(r.campus));
   if (sdData.length) {
     const cols = Object.keys(sdData[0]).map(k => ({
       title: k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
