@@ -606,8 +606,8 @@ body {
     <label for="filterFoundationized">F-ized</label>
   </div>
   <div class="filter-toggle">
-    <input type="checkbox" id="filterOnlineOnly"/>
-    <label for="filterOnlineOnly">Online only</label>
+    <input type="checkbox" id="filterShowOffline"/>
+    <label for="filterShowOffline">Show offline</label>
   </div>
   <div class="filter-group">
     <input id="filterPropSearch" type="text" class="filter-input" placeholder="Search properties..." style="min-width:140px;"/>
@@ -649,7 +649,7 @@ body {
 
   <!-- ==================== LEASING ==================== -->
   <div id="sec-leasing" class="section">
-    <div class="section-header">Leasing</div>
+    <div class="section-header">Leasing <span style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:12px;">Showing current AY data only. Year filter applies to Projections &amp; Construction.</span></div>
     <div class="kpi-row" id="leasing-kpis"></div>
     <div class="panel">
       <div class="panel-title">Pace: Cumulative Signed Beds</div>
@@ -670,12 +670,7 @@ body {
       </div>
     </div>
     <div class="panel">
-      <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;">
-        Property Scorecard
-        <label style="font-size:12px;font-weight:400;color:var(--text-secondary);cursor:pointer;">
-          <input type="checkbox" id="toggleOffline" style="margin-right:4px;"/>Show offline
-        </label>
-      </div>
+      <div class="panel-title">Property Scorecard</div>
       <div id="table-properties"></div>
     </div>
   </div>
@@ -774,7 +769,6 @@ const STATE = {
   propertySearch: '',
   selectedPropertyId: null,
   showOffline: false,
-  onlineOnly: false,
 };
 
 // =========================================================================
@@ -973,13 +967,10 @@ function initFilters() {
   filterStable.addEventListener('change', () => { STATE.stableOnly = filterStable.checked; refresh(); });
   filterFoundationized.addEventListener('change', () => { STATE.foundationizedOnly = filterFoundationized.checked; refresh(); });
 
-  document.getElementById('filterOnlineOnly').addEventListener('change', function() {
-    STATE.onlineOnly = this.checked;
+  document.getElementById('filterShowOffline').addEventListener('change', function() {
+    STATE.showOffline = this.checked;
     refresh();
   });
-
-  const toggleOffline = document.getElementById('toggleOffline');
-  if (toggleOffline) toggleOffline.addEventListener('change', () => { STATE.showOffline = toggleOffline.checked; buildPropertyTable(); });
 
   let searchTimeout;
   filterPropSearch.addEventListener('input', () => {
@@ -1640,28 +1631,38 @@ function buildPropertyTable() {
     const q = STATE.propertySearch;
     filtered = filtered.filter(r => (r.property_name || '').toLowerCase().includes(q) || (r.campus || '').toLowerCase().includes(q));
   }
-  // Filter offline properties for selected year (default: hide)
-  const offlineIds = new Set((projections.property_detail || [])
-    .filter(r => r.ay2627_offline).map(r => r.property_id));
-  if (!STATE.showOffline) {
-    filtered = filtered.filter(r => !offlineIds.has(r.property_id));
-  }
+  // Determine offline IDs based on selected year
+  const selectedYear = STATE.year || '2026-27';
+  const availData = leasing.availability || [];
+  // Use first month of selected AY to determine online/offline
+  const checkMonth = selectedYear === '2027-28' ? '2027-06' : '2026-06';
+  const offlineFromAvail = new Set(
+    availData.filter(r => r.month === checkMonth && r.designation === 'offline_construction' && r.ownership === 'owned')
+      .map(r => r.property_id)
+  );
+  // Fallback to projections if availability not loaded
+  const offlineFromProj = new Set((projections.property_detail || [])
+    .filter(r => selectedYear === '2026-27' ? r.ay2627_offline : false)
+    .map(r => r.property_id));
+  const offlineIds = offlineFromAvail.size > 0 ? offlineFromAvail : offlineFromProj;
 
-  // Enrich with online_status from availability data or projections
   const managedIds = new Set((projections.property_detail || [])
     .filter(r => r.ownership_type === 'Managed').map(r => r.property_id));
+
+  // Enrich with online_status and year
   filtered = filtered.map(r => {
-    let status = '\u2014';
+    let status = 'online';
     if (managedIds.has(r.property_id)) status = 'managed';
     else if (offlineIds.has(r.property_id)) status = 'offline';
-    else status = 'online';
-    return Object.assign({}, r, { online_status: status });
+    return Object.assign({}, r, { online_status: status, academic_year: selectedYear });
   });
 
-  // Apply onlineOnly filter
-  if (STATE.onlineOnly) {
-    filtered = filtered.filter(r => r.online_status === 'online');
+  // Default: hide offline unless "Show offline" is checked
+  if (!STATE.showOffline) {
+    filtered = filtered.filter(r => r.online_status !== 'offline');
   }
+  // Always exclude managed (719 EG) from portfolio table
+  filtered = filtered.filter(r => r.online_status !== 'managed');
 
   if (propTable) { propTable.destroy(); propTable = null; }
 
@@ -1673,6 +1674,7 @@ function buildPropertyTable() {
     columns: [
       { title: 'Campus', field: 'campus', headerFilter: true, minWidth: 100, frozen: true },
       { title: 'Property', field: 'property_name', headerFilter: true, minWidth: 160, frozen: true },
+      { title: 'AY', field: 'academic_year', width: 75, hozAlign: 'center' },
       { title: 'Status', field: 'online_status', headerFilter: true, width: 80, hozAlign: 'center',
         formatter: function(cell) {
           const v = cell.getValue();
