@@ -1048,15 +1048,31 @@ function aggKpis(rows) {
   const fill = inv > 0 ? signed / inv : null;
   const signedVsTargetRatio = targBeds > 0 ? signed / targBeds : null;
   const revVsTargetRatio = targNet > 0 ? net / targNet : null;
-  const actualAvg = bedMonths > 0 ? net / bedMonths : null;
+  // Use pre-computed values first, fall back to recomputation
+  const actualAvgPre = rows.map(r => r['actual_avg_net_per_bed_month_asof']).filter(v => v != null && !isNaN(v));
+  const actualAvg = actualAvgPre.length
+    ? actualAvgPre.reduce((a, b) => a + Number(b), 0) / actualAvgPre.length
+    : (bedMonths > 0 ? net / bedMonths : null);
   const targAvgs = rows.map(r => r['target_avg_effective_per_bed_month_full']).filter(v => v != null && !isNaN(v));
   const targAvg = targAvgs.length ? targAvgs.reduce((a, b) => a + Number(b), 0) / targAvgs.length : null;
-  const priceReal = targAvg && targAvg > 0 && actualAvg !== null ? actualAvg / targAvg : null;
+  // Prefer pre-computed price_realization, fall back to division
+  const priceRealPre = rows.map(r => r['price_realization']).filter(v => v != null && !isNaN(v));
+  const priceReal = priceRealPre.length
+    ? priceRealPre.reduce((a, b) => a + Number(b), 0) / priceRealPre.length
+    : (targAvg && targAvg > 0 && actualAvg !== null ? actualAvg / targAvg : null);
   const paceDelta = sum('pace_yoy_signed_delta');
   const paceRatios = rows.map(r => r['pace_yoy_signed_ratio']).filter(v => v != null && !isNaN(v));
   const paceRatio = paceRatios.length ? paceRatios.reduce((a, b) => a + Number(b), 0) / paceRatios.length : null;
-  const spRatios = rows.map(r => r['same_property_price_yoy_ratio']).filter(v => v != null && !isNaN(v));
-  const spRatio = spRatios.length ? spRatios.reduce((a, b) => a + Number(b), 0) / spRatios.length : null;
+  // Same property price YoY — may not be computed on every snapshot, fall back to any available
+  let spRatios = rows.map(r => r['same_property_price_yoy_ratio']).filter(v => v != null && !isNaN(v));
+  if (!spRatios.length) {
+    // Fall back to any ALL row with this metric across all snapshots
+    const allKpis = leasing.kpis || [];
+    spRatios = allKpis
+      .filter(r => r.campus === 'ALL' && r.same_property_price_yoy_ratio != null && !isNaN(r.same_property_price_yoy_ratio))
+      .map(r => r.same_property_price_yoy_ratio);
+  }
+  const spRatio = spRatios.length ? spRatios[spRatios.length - 1] : null;
   const vel = sum('velocity_7d_signed_beds_per_day');
   const priorSigned = sum('prior_signed_beds_asof');
   return { inv, signed, targBeds, net, targNet, bedMonths, fill, signedVsTargetRatio, revVsTargetRatio, actualAvg, targAvg, priceReal, paceDelta, paceRatio, spRatio, vel, priorSigned };
@@ -1089,14 +1105,20 @@ function renderOverview() {
   const kRows = getFilteredKpis();
   const agg = aggKpis(kRows);
 
-  // Compute availability-based fill rates (exclude P012 managed property)
-  const ownedAvail = availability.filter(r => r.ownership === 'owned');
+  // Compute availability-based fill rates (exclude P012, respect campus filter)
+  let ownedAvail = availability.filter(r => r.ownership === 'owned');
+  if (STATE.campuses.length > 0) {
+    ownedAvail = ownedAvail.filter(r => STATE.campuses.includes(r.campus));
+  }
   const nowMonth = '2026-06';
   const fullMonth = '2026-10';
   const bedsOnlineNow = ownedAvail.filter(r => r.month === nowMonth).reduce((s,r) => s + (Number(r.beds_online) || 0), 0);
   const bedsOnlineFull = ownedAvail.filter(r => r.month === fullMonth).reduce((s,r) => s + (Number(r.beds_online) || 0), 0);
-  // Signed beds excluding P012
-  const ownedProps = (leasing.properties || []).filter(r => r.property_id !== 'P012');
+  // Signed beds excluding P012, respect campus filter
+  let ownedProps = (leasing.properties || []).filter(r => r.property_id !== 'P012');
+  if (STATE.campuses.length > 0) {
+    ownedProps = ownedProps.filter(r => STATE.campuses.includes(r.campus));
+  }
   const asofSnap = snapDate(STATE.asof);
   const ownedPropsSnap = ownedProps.filter(r => r.snapshot_date === asofSnap);
   const ownedSigned = (ownedPropsSnap.length ? ownedPropsSnap : ownedProps).reduce((s,r) => s + (Number(r.signed_beds) || 0), 0);
@@ -1397,12 +1419,18 @@ function refreshLeasingKpis() {
   const deltaNet = agg.targNet > 0 ? agg.net - agg.targNet : null;
   const spDelta = agg.spRatio != null ? Number(agg.spRatio) - 1 : null;
 
-  // LS-03: Signed Beds vs Leasable (use online beds from projections, not stale target count)
-  const projProps = projections.property_detail || [];
+  // LS-03: Signed Beds vs Leasable (respect campus filter)
+  let projProps = projections.property_detail || [];
+  if (STATE.campuses.length > 0) {
+    projProps = projProps.filter(r => STATE.campuses.includes(r.campus));
+  }
   const onlineProps = projProps.filter(r => !r.ay2627_offline);
   const onlineBeds = onlineProps.reduce((s,r) => s + (r.beds || 0), 0);
-  // Get owned signed beds from leasing properties (exclude P012)
-  const lsOwnedProps = (leasing.properties || []).filter(r => r.property_id !== 'P012');
+  // Get owned signed beds from leasing properties (exclude P012, respect campus)
+  let lsOwnedProps = (leasing.properties || []).filter(r => r.property_id !== 'P012');
+  if (STATE.campuses.length > 0) {
+    lsOwnedProps = lsOwnedProps.filter(r => STATE.campuses.includes(r.campus));
+  }
   const lsAsof = snapDates.length ? snapDates[snapDates.length - 1] : '';
   const lsOwnedSnap = lsOwnedProps.filter(r => r.snapshot_date === lsAsof);
   const lsOwnedSigned = (lsOwnedSnap.length ? lsOwnedSnap : lsOwnedProps).reduce((s,r) => s + (Number(r.signed_beds) || 0), 0);
