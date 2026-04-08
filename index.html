@@ -628,7 +628,7 @@ body {
     <div class="row-2">
       <div class="panel">
         <div class="panel-title">Equity Waterfall</div>
-        <div id="chart-equity-waterfall" style="height:320px;"></div>
+        <div id="chart-equity-waterfall" style="height:340px;"></div>
       </div>
     </div>
     <div class="row-2">
@@ -1191,52 +1191,89 @@ function renderOverview() {
     ));
   }
 
-  // Equity Waterfall chart
+  // Equity Waterfall — Horizontal stacked cap stack (Carta-style)
   const ewEl = document.getElementById('chart-equity-waterfall');
   if (cm.re_income_value != null) {
-    const netReEquity = (cm.re_income_value || 0) - (cm.senior_debt || 0) - (cm.non_senior_debt || 0);
-    const haircut = -(cm.common_equity_gross || 0) * (cm.common_equity_haircut_pct || 0.25);
-    Plotly.newPlot('chart-equity-waterfall', [{
-      type: 'waterfall',
-      orientation: 'v',
-      measure: ['absolute', 'relative', 'relative', 'total', 'relative', 'total', 'relative', 'total'],
-      x: ['RE Value (Income)', 'Senior Debt', 'Non-Senior Debt', 'Net RE Equity', 'Pref Equity', 'Common Equity (gross)', '25% Haircut', 'Common Equity (adj)'],
-      y: [
-        cm.re_income_value,
-        -(cm.senior_debt || 0),
-        -(cm.non_senior_debt || 0),
-        netReEquity,
-        -(cm.pref_equity || 0),
-        cm.common_equity_gross || 0,
-        haircut,
-        cm.common_equity_adjusted || 0
-      ],
-      connector: { line: { color: 'rgba(255,255,255,0.1)' } },
-      increasing: { marker: { color: '#34d399' } },
-      decreasing: { marker: { color: '#ff6b6b' } },
-      totals: { marker: { color: '#7a7a90' } },
-      textposition: 'auto',
-      text: [
-        bigMoney(cm.re_income_value),
-        bigMoney(cm.senior_debt || 0),
-        bigMoney(cm.non_senior_debt || 0),
-        bigMoney(netReEquity),
-        bigMoney(cm.pref_equity || 0),
-        bigMoney(cm.common_equity_gross || 0),
-        bigMoney(Math.abs(haircut)),
-        bigMoney(cm.common_equity_adjusted || 0)
-      ],
-      textfont: { family: 'JetBrains Mono', size: 10, color: '#e8e8ed' },
-    }], pLayout({ margin: { t: 30, r: 16, b: 140, l: 70 }, yaxis: { title: '', gridcolor: 'rgba(255,255,255,0.04)' },
-      uniformtext: { mode: 'hide', minsize: 9 },
-      annotations: [{
-        text: 'Book Value: Common Equity = ' + bigMoney(cm.common_equity_book_adjusted || cm.common_equity_book_gross || 0) + ' (cost basis underwater)',
-        xref: 'paper', yref: 'paper',
-        x: 0.5, y: -0.25,
-        showarrow: false,
-        font: { family: 'JetBrains Mono', size: 11, color: '#ff6b6b' },
-        align: 'center'
-      }]
+    const reVal = cm.re_income_value || 0;
+    const seniorD = cm.senior_debt || 0;
+    const nonSeniorD = cm.non_senior_debt || 0;
+    const prefEq = cm.pref_equity || 0;
+    const ceGross = cm.common_equity_gross || 0;
+    const haircut = ceGross * (cm.common_equity_haircut_pct || 0.25);
+    const ceAdj = cm.common_equity_adjusted || 0;
+    const bookCe = cm.common_equity_book_adjusted || cm.common_equity_book_gross || 0;
+
+    // Stacked horizontal bar — each layer as a proportion of RE Value
+    const layers = [
+      { name: 'Senior Debt', value: seniorD, color: '#ff6b6b', pct: seniorD/reVal },
+      { name: 'Non-Senior Debt', value: nonSeniorD, color: '#f87171', pct: nonSeniorD/reVal },
+      { name: 'Pref Equity', value: prefEq, color: '#fb923c', pct: prefEq/reVal },
+      { name: '25% Haircut', value: haircut, color: '#55556a', pct: haircut/reVal },
+      { name: 'Common Equity', value: ceAdj, color: '#34d399', pct: ceAdj/reVal },
+    ];
+
+    // Build the stacked bar chart
+    const traces = layers.map(l => ({
+      type: 'bar',
+      name: l.name,
+      orientation: 'h',
+      y: ['Income Approach', 'Book Value'],
+      x: [l.value, l.name === 'Common Equity' ? (bookCe > 0 ? bookCe : 0) :
+          l.name === '25% Haircut' ? (bookCe < 0 ? Math.abs(bookCe) * 0.25 : haircut) :
+          l.value],
+      marker: { color: l.color },
+      hovertemplate: l.name + ': %{x:$,.0f}<extra></extra>',
+      texttemplate: '%{x:$,.0f}',
+      textposition: l.value / reVal > 0.08 ? 'inside' : 'none',
+      textfont: { family: 'JetBrains Mono', size: 11, color: '#fff' },
+      insidetextanchor: 'middle',
+    }));
+
+    // Add annotations for key values
+    const annotations = [
+      // Total RE Value label above
+      { text: 'RE Value: ' + bigMoney(reVal), x: reVal, y: 1.15, yref: 'paper', xref: 'x',
+        showarrow: false, font: { family: 'JetBrains Mono', size: 12, color: '#e8e8ed' }, xanchor: 'right' },
+      // LTV annotation
+      { text: 'LTV ' + fmtPct(cm.ltv) + ' | LTC ' + fmtPct(cm.ltc_projected),
+        x: seniorD + nonSeniorD, y: -0.35, yref: 'paper', xref: 'x',
+        showarrow: true, arrowhead: 0, arrowcolor: 'rgba(255,255,255,0.2)', ay: 25, ax: 0,
+        font: { family: 'JetBrains Mono', size: 10, color: '#7a7a90' } },
+      // Common equity callout
+      { text: ceAdj >= 0 ? '+' + bigMoney(ceAdj) : bigMoney(ceAdj),
+        x: reVal, y: 'Income Approach', xref: 'x', yref: 'y',
+        showarrow: true, arrowhead: 2, arrowcolor: ceAdj >= 0 ? '#34d399' : '#ff6b6b',
+        ax: 40, ay: -20,
+        font: { family: 'JetBrains Mono', size: 12, color: ceAdj >= 0 ? '#34d399' : '#ff6b6b', weight: 700 } },
+      // Book value equity callout
+      { text: bookCe >= 0 ? '+' + bigMoney(bookCe) : bigMoney(bookCe),
+        x: (cm.re_book_value_projected || cm.re_cost_basis || reVal), y: 'Book Value', xref: 'x', yref: 'y',
+        showarrow: true, arrowhead: 2, arrowcolor: bookCe >= 0 ? '#34d399' : '#ff6b6b',
+        ax: 40, ay: -20,
+        font: { family: 'JetBrains Mono', size: 12, color: bookCe >= 0 ? '#34d399' : '#ff6b6b', weight: 700 } },
+    ];
+
+    Plotly.newPlot('chart-equity-waterfall', traces, pLayout({
+      barmode: 'stack',
+      margin: { t: 40, r: 80, b: 60, l: 130 },
+      xaxis: {
+        title: '',
+        gridcolor: 'rgba(255,255,255,0.04)',
+        tickformat: '$,.0f',
+        tickfont: { family: 'JetBrains Mono', size: 10 },
+        range: [0, reVal * 1.08],
+      },
+      yaxis: {
+        automargin: true,
+        tickfont: { family: 'DM Sans', size: 12 },
+      },
+      legend: {
+        orientation: 'h', y: -0.2, x: 0.5, xanchor: 'center',
+        font: { family: 'DM Sans', size: 11, color: '#7a7a90' },
+        traceorder: 'normal',
+      },
+      annotations: annotations,
+      height: 280,
     }), PLOTLY_CONFIG);
   } else {
     ewEl.innerHTML = '<div class="unavailable">Capital metrics not available</div>';
