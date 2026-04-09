@@ -387,9 +387,150 @@ tr.total td:first-child { color: var(--text-primary); }
   border-top: 1px solid var(--border);
   font-family: 'JetBrains Mono', monospace;
 }
+
+/* ---------- Risk Flag Severity Badges ---------- */
+.sev-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sev-critical { background: rgba(255,107,107,0.25); color: #ff8a8a; border: 1px solid rgba(255,107,107,0.45); }
+.sev-high     { background: rgba(234,88,12,0.22);  color: #fdba74; border: 1px solid rgba(234,88,12,0.4); }
+.sev-medium   { background: rgba(251,191,36,0.18); color: #fcd34d; border: 1px solid rgba(251,191,36,0.35); }
+.sev-low      { background: rgba(120,120,140,0.22); color: #b8b8c8; border: 1px solid rgba(120,120,140,0.35); }
+tr.sev-row-critical td { background: rgba(255,107,107,0.06); }
+tr.sev-row-high     td { background: rgba(234,88,12,0.05); }
+tr.sev-row-medium   td { background: rgba(251,191,36,0.04); }
+tr.sev-row-low      td { background: rgba(120,120,140,0.04); }
+
+/* ---------- Export Buttons ---------- */
+.export-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.export-btn {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-accent);
+  color: var(--text-primary);
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms;
+}
+.export-btn:hover {
+  border-color: var(--accent-coral);
+  background: rgba(255,107,107,0.08);
+  color: var(--accent-coral);
+}
+
+/* ---------- Open Items List ---------- */
+.open-items {
+  list-style: none;
+  counter-reset: item;
+  padding: 0;
+}
+.open-items li {
+  counter-increment: item;
+  padding: 12px 14px 12px 44px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+.open-items li::before {
+  content: counter(item);
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 22px;
+  height: 22px;
+  background: var(--accent-coral-dim);
+  color: var(--accent-coral);
+  border-radius: 50%;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.open-items li:last-child { border-bottom: none; }
+
+/* ---------- Scenario Columns ---------- */
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+@media (max-width: 900px) { .scenario-grid { grid-template-columns: 1fr; } }
+.scenario-card {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 18px 16px;
+}
+.scenario-card.base { border-color: rgba(52,211,153,0.4); }
+.scenario-card.cons { border-color: rgba(251,191,36,0.4); }
+.scenario-card.sev  { border-color: rgba(255,107,107,0.4); }
+.scenario-card h4 {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+}
+.scenario-card.base h4 { color: var(--success); }
+.scenario-card.cons h4 { color: var(--warning); }
+.scenario-card.sev  h4 { color: var(--accent-coral); }
+.scenario-card .metric {
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 12px;
+  border-bottom: 1px dashed rgba(255,255,255,0.05);
+}
+.scenario-card .metric:last-child { border-bottom: none; }
+.scenario-card .metric span:first-child { color: var(--text-secondary); }
+.scenario-card .metric span:last-child { color: var(--text-primary); font-weight: 600; }
+
+/* ---------- LTV Table ---------- */
+.ltv-table td strong { color: var(--accent-coral); }
+
+/* ---------- Gate ---------- */
+#recap-gate-deny {
+  padding: 60px;
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  color: #fff;
+  background: #08080d;
+  min-height: 100vh;
+}
 </style>
 </head>
 <body>
+<script>
+(function () {
+  var RECAP_PASSWORD = 'foundation2026';
+  var stored = null;
+  try { stored = sessionStorage.getItem('recap_auth'); } catch (e) { stored = null; }
+  if (stored !== RECAP_PASSWORD) {
+    var pw = prompt('Enter password to access Foundation Seed Portfolio Recap');
+    if (pw !== RECAP_PASSWORD) {
+      document.body.innerHTML = '<div id="recap-gate-deny"><h2>Access Denied</h2><p>Contact ryan.day@foundationhousing.co for access.</p></div>';
+      throw new Error('auth');
+    }
+    try { sessionStorage.setItem('recap_auth', RECAP_PASSWORD); } catch (e) {}
+  }
+})();
+</script>
 <div class="container">
 
 <div class="header">
@@ -433,6 +574,19 @@ tr.total td:first-child { color: var(--text-primary); }
   </div>
 </div>
 
+<!-- ========== EXPORT DATA ========== -->
+<div class="panel">
+  <div class="panel-title">Export Data</div>
+  <div class="export-row">
+    <button class="export-btn" id="btn-export-summary">Download Recap Summary (CSV)</button>
+    <button class="export-btn" id="btn-export-noi">Download NOI Projections (CSV)</button>
+    <button class="export-btn" id="btn-export-risks">Download Risk Flag Report (TXT)</button>
+  </div>
+  <div style="font-size:10px;color:var(--text-muted);margin-top:10px;">
+    Exports reflect current slider state (Tranche 2 amount, cap rate, exit year, NOI haircut, construction debt LTV).
+  </div>
+</div>
+
 <!-- ========== INTERACTIVE CONTROLS ========== -->
 <div class="controls">
   <div class="controls-title">Adjust Tranche 2 Assumptions</div>
@@ -452,6 +606,14 @@ tr.total td:first-child { color: var(--text-primary); }
         <option value="ay2829_mid">AY 2028-29</option>
         <option value="ay2930_mid" selected>AY 2029-30 (base case)</option>
       </select>
+    </div>
+    <div class="control">
+      <label>NOI haircut <span class="value" id="lbl-haircut">0%</span></label>
+      <input type="range" id="ctrl-haircut" min="-0.30" max="0.00" step="0.01" value="0.00"/>
+    </div>
+    <div class="control">
+      <label>Construction debt LTV <span class="value" id="lbl-ltv">65%</span></label>
+      <input type="range" id="ctrl-ltv" min="0.65" max="0.80" step="0.01" value="0.65"/>
     </div>
   </div>
 </div>
@@ -505,6 +667,72 @@ tr.total td:first-child { color: var(--text-primary); }
   <div class="story" id="story"></div>
 </div>
 
+<!-- ========== USES GRANULAR ========== -->
+<div class="panel">
+  <div class="panel-title">Uses of Funds &mdash; Granular Breakdown</div>
+  <div id="uses-granular"></div>
+  <div style="font-size:10px;color:var(--text-muted);margin-top:10px;">
+    Elevator ($380K), AP retirement ($2.0M), and payroll/platform ($1.5M) line items are ESTIMATES pending Steve's confirmation.
+  </div>
+</div>
+
+<!-- ========== 36-MONTH CASH FLOW ========== -->
+<div class="panel">
+  <div class="panel-title">36-Month Cash Flow Projection (May 2026 &rarr; Apr 2029)</div>
+  <div id="cashflow-chart" style="height:360px;"></div>
+  <div style="font-size:10px;color:var(--text-muted);margin-top:10px;">
+    Stacked inflows (tranche capital, HTC receipts, lease revenue) and outflows (construction draws, debt service, opex) with cumulative cash position overlay.
+  </div>
+</div>
+
+<!-- ========== DOWNSIDE STRESS TEST ========== -->
+<div class="panel">
+  <div class="panel-title">Downside Stress Test &mdash; NOI Sensitivity</div>
+  <div id="stress-test"></div>
+  <div style="font-size:10px;color:var(--text-muted);margin-top:10px;">
+    Use the NOI haircut slider above to explore intermediate scenarios. All coverage calculated at the 7.35% anchor cap.
+  </div>
+</div>
+
+<!-- ========== LTV VARIABLE ========== -->
+<div class="panel">
+  <div class="panel-title">Construction Debt LTV &mdash; Senior Debt Impact</div>
+  <div id="ltv-table"></div>
+  <div style="font-size:10px;color:var(--text-muted);margin-top:10px;">
+    Base construction debt funding assumed at 65% LTV = $5.6M new senior. Higher LTV increases new construction debt proceeds proportionally. Adjust the LTV slider above to flow this through the dashboard coverage math.
+  </div>
+</div>
+
+<!-- ========== HTC CASH SCHEDULE ========== -->
+<div class="panel">
+  <div class="panel-title">Historic Tax Credit (HTC) Cash Schedule</div>
+  <div id="htc-table"></div>
+  <div style="font-size:10px;color:var(--text-muted);margin-top:10px;">
+    HTC bridge loans are netted against future syndicated receipts on 108 Eddy + 23 Henry.
+  </div>
+</div>
+
+<!-- ========== OTHER CASH SOURCES ========== -->
+<div class="panel">
+  <div class="panel-title">Other Expected Cash Sources (Beyond Recap)</div>
+  <div id="other-cash-table"></div>
+</div>
+
+<!-- ========== RISK FLAGS ========== -->
+<div class="panel">
+  <div class="panel-title">Risk Flags Report</div>
+  <div id="risk-flags-table"></div>
+</div>
+
+<!-- ========== STEVE OPEN ITEMS ========== -->
+<div class="panel">
+  <div class="panel-title">Open Items Pending Steve's Input</div>
+  <div id="steve-open-items"></div>
+  <div style="font-size:10px;color:var(--text-muted);margin-top:10px;">
+    These items require Steve's review before the Tranche 2 close. Modeled values include estimates flagged throughout the dashboard.
+  </div>
+</div>
+
 <div class="gen-note">
   Foundation Assets LLC · Confidential · Generated 2026-04-09
 </div>
@@ -512,14 +740,30 @@ tr.total td:first-child { color: var(--text-primary); }
 </div>
 
 <script>
-const RECAP = {"jadian_investment": 14000000, "pref_replace": 3528584, "other_uses_total": 10471416, "uses_breakdown": {"clay_buyout": 3528584, "retire_non_senior_debt": 1524122, "ap_retirement": 2000000, "payroll_platform": 1500000, "construction_2026_27": 5447294}, "pre_recap": {"re_value_income": 50168031, "re_value_book": 40829847, "senior_debt": 27730851, "non_senior_debt": 1524122, "pref_equity": 14202946, "common_equity_gross": 6710112, "common_equity_adj": 5032584}, "post_recap_a": {"description": "Jadian pari-passu with Foundation partner pref (Ryan/Steve/Laney/Greg). Clay fully cashed out.", "re_value_income": 50168031, "senior_debt": 27730851, "non_senior_debt": 0, "legacy_pref": 10674362, "jadian_pref": 14000000, "common_equity": -2237182}, "post_recap_c": {"description": "Jadian SENIOR to Foundation partner pref. Clay fully cashed out.", "re_value_income": 50168031, "senior_debt": 27730851, "non_senior_debt": 0, "jadian_pref_senior": 14000000, "legacy_pref_junior": 10674362, "common_equity": -2237182}, "noi_projections": {"ay2627": 1712082.0, "ay2728_low": 3140349.0, "ay2728_mid": 3358623.0, "ay2728_high": 3477042.0, "ay2829_low": 3261299.0, "ay2829_mid": 3486659.0, "ay2829_high": 3621874.0, "ay2930_low": 3374808.0, "ay2930_mid": 3607481.0, "ay2930_high": 3747086.0}, "sensitivity_matrix": {"cap_rates": [0.0685, 0.071, 0.0735, 0.076, 0.0785], "years": ["AY 27-28", "AY 28-29", "AY 29-30"]}, "coverage_target": 1.5, "sources": {"noi_projections": "sot_noi_projections_stabilized_v5.0.csv (Steve approved)", "capital_metrics": "sot_capital_metrics_v1.0.json", "recap_assumptions": "Internal model \u2014 Ryan"}, "pref_breakdown": {"clay_rives_pre": 3528584, "clay_rives_post": 0, "ryan_day": 8619561, "steve_vassallo": 1384652, "laney_vassallo": 544468, "greg_vassallo": 125681, "foundation_partners_total": 10674362}, "anchor_cap_rate": 0.0735, "cap_rate_range": [0.0685, 0.0785], "cap_rate_basis": "Anchored to 7.35% \u2014 Jadian historical underwriting at 7.75% adjusted for stabilized seed portfolio quality", "tranches": {"tranche_1": {"name": "Bridge LOC", "amount": 500000, "closing_date": "2026-04-10", "description": "Quick-close bridge funding. Functions as LOC, knocked out by tranche 2.", "use": "Bridge cash needs between 4/10 and 5/15"}, "tranche_2": {"name": "Recap Investment", "amount": 14000000, "closing_date_target": "2026-05-15", "description": "Main recap. Includes refinance/payoff of tranche 1 LOC.", "use": "Clay buyout + non-senior debt + AP + payroll + construction"}, "tranche_3": {"name": "JV Equity (TBD)", "amount": null, "closing_date_target": "TBD", "description": "Original JV deal terms \u2014 full Jadian platform investment", "use": "Future portfolio expansion"}}, "tranche_2_net_new": 13500000, "focus_scenario": "C", "scenario_C_rationale": "New partner sits SENIOR to Foundation partner pref. Foundation partners are subordinated for the value creation thesis."};
+const RECAP = {"as_of": "2026-04-09", "source_doc": "Jadian Capital folder + signed term sheet (1.26.26)", "tranches": {"tranche_1": {"name": "Bridge LOC", "amount": 500000, "closing_date": "2026-04-10", "status": "imminent", "description": "Quick-close bridge funding. Functions as LOC, knocked out by tranche 2.", "use": "Bridge cash needs between 4/10 and 5/15"}, "tranche_2": {"name": "Recap Investment (Secondary)", "amount": 14000000, "amount_low_term_sheet": 9000000, "amount_high": 22400000, "closing_date_target": "2026-05-15", "status": "targeting", "description": "Per term sheet: secondary equity to retire short-term debt + Clay convertible + partner pref paydown. Increased to $14M to fund construction + AP + payroll.", "use_per_term_sheet": {"short_term_debt_retire": 1684000, "clay_convertible_payoff": 3450000, "partner_pref_paydown": 3550000}}, "tranche_3": {"name": "JV Initial Capital", "amount": 22400000, "jadian_total_commit": 100000000, "closing_date_target": "TBD", "description": "Per signed term sheet 1/26/26: ~$22.4M Jadian initial including ~$3.48M seed capex + Pipeline Deal equity. Jadian total commit up to $100M.", "use": "Pipeline Deal acquisitions (Cornell, Syracuse, RPI) + remaining Seed CapEx"}}, "jadian_apr_26_valuation": {"stabilized_noi_27_28": 3594000, "foundation_view": {"stabilized_value": 21910000, "transitional_value": 16406062, "rpi_gl_value": 5557400, "total": 43873462, "less_required_capex": -9551400, "plus_expected_htcs": 4105261, "current_value": 38427323, "less_current_debt": -22215415, "less_htc_bridge": -2434043, "equity_value": 13777865}, "jadian_view": {"stabilized_value": 21910000, "transitional_value": 15230000, "rpi_gl_value": 5557400, "total": 42697400, "less_required_capex": -9036400, "plus_expected_htcs": 2012000, "current_value": 35673000, "less_current_debt": -22240000, "equity_value": 13433000}}, "htc": {"company_retained": {"721_lancaster": {"total": 204949, "status": "Part II approved", "year": "Summer 2026"}, "1000_ackerman": {"total": 230866, "status": "Part II approved", "year": "Summer 2026"}, "867_lancaster": {"total": 175000, "status": "Not yet submitted", "year": "Summer 2027"}, "817_comstock": {"total": 200000, "status": "Not yet submitted", "year": "Summer 2027"}}, "investor_syndicated": {"108_eddy": {"total": 1731623, "cash_received_to_date": 1118661, "future_cash": 612962, "status": "Part III approved"}, "23_henry": {"total": 2503480, "cash_received_to_date": 673855, "future_cash": 1829625, "status": "Part II approved", "note": "Sherwin Williams syndication. $1.89M HTC bridge loan against future receivables."}}, "totals": {"company_retained": 810815, "syndicated_received": 1792516, "syndicated_future": 2442587, "all_credits": 5045918, "htc_bridge_outstanding": 2434043}}, "remaining_capex": {"total_program": 9100000, "expected_debt_funding": 5600000, "expected_equity_funding": 3480000, "beds_binghamton_23_henry": 52, "beds_rpi": 108, "beds_syracuse": 30, "projected_incremental_noi": 1794000, "projected_stabilized_noi_27_28": 3500000}, "valuation_assumptions": {"cap_rate_anchor": 0.0735, "cap_rate_jadian_historical": 0.0775, "cap_rate_range_low": 0.0685, "cap_rate_range_high": 0.0785, "rationale": "Anchored to 7.35%. Jadian historical underwriting at 7.75% adjusted -40bps for stabilized seed quality.", "construction_debt_ltv_assumed": 0.65, "construction_debt_ltv_range": [0.65, 0.75, 0.8]}, "pre_recap": {"re_value_income": 50168031, "re_value_book": 40829847, "re_value_jadian_apr_26": 43873462, "senior_debt": 23793458, "senior_debt_projected_9_26": 27730851, "non_senior_debt": 1524122, "pref_equity_total": 14202946, "pref_clay": 3528584, "pref_foundation_partners": 10674362, "common_equity_gross": 6710112}, "risk_flags": [{"category": "Construction", "risk": "23 Henry elevator decommissioned, ~$380K work outstanding", "severity": "HIGH", "owner": "Steve"}, {"category": "Construction", "risk": "RPI 108-bed renovation timeline (May-Sep 2026)", "severity": "MEDIUM", "owner": "Steve"}, {"category": "Construction", "risk": "Sumner construction slips to May 2027 \u2014 CNB extension needed", "severity": "MEDIUM", "owner": "Steve/Melissa"}, {"category": "Leasing", "risk": "Current AY 26-27 fill at 78% online beds. RPI lagging at 38% for post-reno", "severity": "MEDIUM", "owner": "Laney/Ryan"}, {"category": "Leasing", "risk": "Vacancy 5% assumed in NOI; current actuals higher Syr/RPI", "severity": "MEDIUM", "owner": "Ryan"}, {"category": "Debt", "risk": "11 senior loans ($3.34M) matured Jan-Mar 2026, refi status unconfirmed", "severity": "CRITICAL", "owner": "Melissa"}, {"category": "Debt", "risk": "HTC bridge loans ($2.43M) on 108 Eddy + 23 Henry", "severity": "MEDIUM", "owner": "Steve"}, {"category": "Capital", "risk": "Construction debt LTV assumed 65% \u2014 actual could be 75-80%", "severity": "LOW", "owner": "Steve"}, {"category": "Operations", "risk": "OpCo 2024 net income only $139K. Low margin for platform burn", "severity": "MEDIUM", "owner": "Steve"}, {"category": "Reconciliation", "risk": "Yves/Christian non-senior debt balances unverified", "severity": "LOW", "owner": "Steve"}, {"category": "Valuation", "risk": "Jadian 27-28 NOI ($3.59M) is $235K above our internal mid ($3.36M)", "severity": "MEDIUM", "owner": "Steve"}], "other_cash_sources": {"sherwin_williams_htc_received": 1792516, "sherwin_williams_htc_future": 2442587, "visions_23_henry_loan_drawdown": 994000, "company_retained_htcs_future": 810815, "total_future_cash_inflows": 4247402}, "noi_projections": {"ay2627": 1712082, "ay2728_low": 3140349, "ay2728_mid": 3358623, "ay2728_high": 3477042, "ay2829_low": 3261299, "ay2829_mid": 3486659, "ay2829_high": 3621874, "ay2930_low": 3374808, "ay2930_mid": 3607481, "ay2930_high": 3747086, "source": "sot_noi_projections_stabilized_v5.0.csv", "jadian_view_27_28": 3594000, "variance_note": "Jadian $3.594M is $235K above our internal mid $3.359M"}, "steve_open_items": ["23 Henry elevator: confirm exact remaining cost (~$380K estimated)", "AY 27-28 + 28-29 NOI projection review by property (ClickUp #86agt71ef)", "Construction loan LTV: confirm actual lender terms (65% assumed)", "Sumner construction loan extension \u2014 CNB conversation", "Matured loan refi status \u2014 ClickUp #86agrnu82", "AP balance and aging (estimated $2M)", "Payroll burn rate going forward", "Growth scenario incorporation: Pipeline Deals (Cornell, Syracuse, RPI)", "Reconcile internal NOI projections ($3.36M) vs Jadian view ($3.59M)"]};
 const TRANCHE_1 = 500000;  // Bridge LOC
 
 const STATE = {
   recap: 14000000,
   cap: 0.0735,
   year: 'ay2930_mid',
+  haircut: 0.00,
+  ltv: 0.65,
 };
+
+// Apply NOI haircut to a projected NOI value
+function adjustedNoi(key) {
+  var raw = RECAP.noi_projections[key] || 0;
+  return raw * (1 + STATE.haircut);
+}
+
+// Additional construction debt proceeds vs. base 65% LTV
+function incrementalConstructionDebt() {
+  return BASE_CONSTR_DEBT * ((STATE.ltv - BASE_LTV) / BASE_LTV);
+}
+function effectiveSeniorDebt() {
+  return SENIOR_DEBT + incrementalConstructionDebt();
+}
 
 function bigMoney(v) {
   if (v == null || isNaN(v)) return '—';
@@ -541,17 +785,21 @@ function yearLabel(key) {
   return {ay2728_mid:'AY 27-28', ay2829_mid:'AY 28-29', ay2930_mid:'AY 29-30'}[key] || key;
 }
 
-const FOUNDATION_PARTNER_PREF = RECAP.pre_recap.pref_equity - 3528584;  // Total pref minus Clay
+const FOUNDATION_PARTNER_PREF = RECAP.pre_recap.pref_foundation_partners || (RECAP.pre_recap.pref_equity_total || RECAP.pre_recap.pref_equity || 0) - 3528584;
 const SENIOR_DEBT = RECAP.pre_recap.senior_debt;
 const RE_VALUE = RECAP.pre_recap.re_value_income;
+const PREF_TOTAL = RECAP.pre_recap.pref_equity_total || RECAP.pre_recap.pref_equity || 0;
+const BASE_LTV = 0.65;
+const BASE_CONSTR_DEBT = (RECAP.remaining_capex && RECAP.remaining_capex.expected_debt_funding) || 5600000;
 
 function render() {
-  const noi = RECAP.noi_projections[STATE.year];
+  const noi = adjustedNoi(STATE.year);
   const exitVal = noi / STATE.cap;
   const recap = STATE.recap;
+  const senior = effectiveSeniorDebt();
 
   // Scenario C: new pref is SENIOR
-  const proceeds_after_senior = exitVal - SENIOR_DEBT;
+  const proceeds_after_senior = exitVal - senior;
   const proceeds_for_new_pref = proceeds_after_senior;
   const new_pref_coverage = proceeds_for_new_pref / recap;
   const remaining_for_fp = Math.max(0, proceeds_after_senior - recap);
@@ -605,10 +853,18 @@ function render() {
   `;
 
   renderCapStackCompare(recap);
-  renderExitWaterfall(exitVal, recap, new_pref_coverage, fp_coverage);
+  renderExitWaterfall(exitVal, recap, new_pref_coverage, fp_coverage, senior);
   renderSensitivity(recap);
   renderNoiChart();
   renderStory(noi, exitVal, new_pref_coverage, construction);
+  renderUsesGranular(recap);
+  renderCashflowChart(recap);
+  renderStressTest(recap);
+  renderLtvTable(recap);
+  renderHtcSchedule();
+  renderOtherCashSources();
+  renderRiskFlags();
+  renderSteveOpenItems();
 }
 
 function kpiCard(label, value, sub, highlight, valClass) {
@@ -628,7 +884,7 @@ function renderCapStackCompare(recap) {
     { short: 'Non-Sr',  value: pre.non_senior_debt, color: '#ea580c' },
     { short: 'Clay',    value: 3528584, color: '#a855f7' },
     { short: 'FP Pref', value: FOUNDATION_PARTNER_PREF, color: '#f59e0b' },
-    { short: 'Common',  value: Math.max(0, total - SENIOR_DEBT - pre.non_senior_debt - pre.pref_equity), color: '#10b981' },
+    { short: 'Common',  value: Math.max(0, total - SENIOR_DEBT - pre.non_senior_debt - PREF_TOTAL), color: '#10b981' },
   ];
 
   const postLayers = [
@@ -660,14 +916,15 @@ function renderCapStackCompare(recap) {
     buildBar('POST-RECAP — New Pref senior to Foundation Partner Pref', postLayers, total);
 }
 
-function renderExitWaterfall(exitVal, recap, newPrefCov, fpCov) {
-  const remaining_after_new_pref = exitVal - SENIOR_DEBT - recap;
+function renderExitWaterfall(exitVal, recap, newPrefCov, fpCov, seniorOverride) {
+  const senior = (typeof seniorOverride === 'number') ? seniorOverride : effectiveSeniorDebt();
+  const remaining_after_new_pref = exitVal - senior - recap;
   let html = `<table>
     <thead><tr><th>Step</th><th style="text-align:right">Amount</th></tr></thead>
     <tbody>
       <tr><td>Exit Value (NOI ÷ Cap)</td><td style="text-align:right;font-weight:700;">${bigMoney(exitVal)}</td></tr>
-      <tr><td>Less: Senior Debt</td><td style="text-align:right;color:var(--accent-coral);">${bigMoney(-SENIOR_DEBT)}</td></tr>
-      <tr><td>= Available to Pref Layers</td><td style="text-align:right;color:var(--success);font-weight:700;">${bigMoney(exitVal - SENIOR_DEBT)}</td></tr>
+      <tr><td>Less: Senior Debt (incl. construction @ ${(STATE.ltv*100).toFixed(0)}% LTV)</td><td style="text-align:right;color:var(--accent-coral);">${bigMoney(-senior)}</td></tr>
+      <tr><td>= Available to Pref Layers</td><td style="text-align:right;color:var(--success);font-weight:700;">${bigMoney(exitVal - senior)}</td></tr>
       <tr><td>Less: New Pref (Senior, ${bigMoney(recap)})</td><td style="text-align:right;color:var(--accent-coral);">${bigMoney(-recap)}</td></tr>
       <tr><td>= Remaining for FP Pref</td><td style="text-align:right;color:${remaining_after_new_pref >= FOUNDATION_PARTNER_PREF ? 'var(--success)' : 'var(--warning)'};font-weight:700;">${bigMoney(remaining_after_new_pref)}</td></tr>
       <tr><td style="color:var(--text-muted);">FP Pref needed</td><td style="text-align:right;color:var(--text-muted);">${bigMoney(FOUNDATION_PARTNER_PREF)}</td></tr>
@@ -685,6 +942,7 @@ function renderSensitivity(recap) {
     { label: 'AY 28-29', key: 'ay2829_mid' },
     { label: 'AY 29-30', key: 'ay2930_mid' },
   ];
+  const senior = effectiveSeniorDebt();
 
   let html = `<table class="sens-matrix"><thead><tr><th>Cap Rate</th>`;
   years.forEach(y => html += `<th>${y.label}</th>`);
@@ -694,9 +952,9 @@ function renderSensitivity(recap) {
     const isAnchor = Math.abs(cap - 0.0735) < 0.0001;
     html += `<tr><td style="font-family:'JetBrains Mono',monospace;color:${isAnchor ? 'var(--accent-coral)' : 'var(--text-secondary)'};font-weight:${isAnchor ? '700' : '500'};">${(cap*100).toFixed(2)}%${isAnchor ? ' ←' : ''}</td>`;
     years.forEach(y => {
-      const noi = RECAP.noi_projections[y.key];
+      const noi = adjustedNoi(y.key);
       const ev = noi / cap;
-      const cov = (ev - SENIOR_DEBT) / recap;
+      const cov = (ev - senior) / recap;
       let color, bg;
       if (cov >= 1.5) { color = 'var(--success)'; bg = 'rgba(52,211,153,0.12)'; }
       else if (cov >= 1.0) { color = 'var(--warning)'; bg = 'rgba(251,191,36,0.12)'; }
@@ -712,13 +970,12 @@ function renderSensitivity(recap) {
 }
 
 function renderNoiChart() {
-  const noi = RECAP.noi_projections;
   const trace = {
     type: 'bar',
     x: ['AY 26-27', 'AY 27-28', 'AY 28-29', 'AY 29-30'],
-    y: [noi.ay2627, noi.ay2728_mid, noi.ay2829_mid, noi.ay2930_mid],
+    y: [adjustedNoi('ay2627'), adjustedNoi('ay2728_mid'), adjustedNoi('ay2829_mid'), adjustedNoi('ay2930_mid')],
     marker: { color: ['#7a7a90', '#f59e0b', '#10b981', '#10b981'] },
-    text: [bigMoney(noi.ay2627), bigMoney(noi.ay2728_mid), bigMoney(noi.ay2829_mid), bigMoney(noi.ay2930_mid)],
+    text: [bigMoney(adjustedNoi('ay2627')), bigMoney(adjustedNoi('ay2728_mid')), bigMoney(adjustedNoi('ay2829_mid')), bigMoney(adjustedNoi('ay2930_mid'))],
     textposition: 'auto',
     textfont: { family: 'JetBrains Mono', size: 13, color: '#fff' },
     hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
@@ -733,7 +990,7 @@ function renderNoiChart() {
     yaxis: { tickformat: '$,.0f', gridcolor: 'rgba(255,255,255,0.04)', tickfont: { size: 10 } },
     annotations: [{
       text: 'Construction completes → +98% NOI',
-      x: 1.5, y: noi.ay2728_mid * 1.05,
+      x: 1.5, y: adjustedNoi('ay2728_mid') * 1.05,
       showarrow: false,
       font: { family: 'DM Sans', size: 12, color: '#f59e0b' },
     }],
@@ -742,7 +999,7 @@ function renderNoiChart() {
 }
 
 function renderStory(noi, exitVal, coverage, construction) {
-  const noiCurrent = RECAP.noi_projections.ay2627;
+  const noiCurrent = adjustedNoi('ay2627');
   const growth = (((noi / noiCurrent) - 1) * 100).toFixed(0);
   document.getElementById('story').innerHTML = `
     <p><strong class="accent">The thesis:</strong> A $${(STATE.recap/1e6).toFixed(1)}M Tranche 2 investment unlocks the construction capital that creates the equity that pays the new partner back — at <strong>${coverage.toFixed(2)}x principal coverage</strong> on the base case.</p>
@@ -751,6 +1008,589 @@ function renderStory(noi, exitVal, coverage, construction) {
     <p>Tranche 1 ($500K bridge LOC closing 4/10) provides immediate working capital between now and the May 15 Tranche 2 close. Tranche 1 is automatically refinanced into Tranche 2 at close.</p>
     <p style="color:var(--text-secondary);font-size:13px;">Use the controls above to model different recap amounts, cap rates, and exit years.</p>
   `;
+}
+
+// ===============================================================
+// === NEW RENDER FUNCTIONS (granular uses, cash flow, stress, etc.)
+// ===============================================================
+
+function renderUsesGranular(recap) {
+  const t1Refi = TRANCHE_1;
+  const clayBuyout = 3450000;         // Clay convertible payoff
+  const shortTermDebt = 1684000;      // Short-term debt retire
+  const elevator = 380000;            // 23 Henry elevator (estimate)
+  const ap = 2000000;                 // AP retirement (estimate)
+  const payroll = 1500000;            // Payroll / platform (estimate)
+  const fixed = t1Refi + clayBuyout + shortTermDebt + elevator + ap + payroll;
+  const construction = Math.max(0, recap - fixed);
+
+  const rows = [
+    { label: 'Refinance Tranche 1 LOC',          amt: t1Refi,        est: false },
+    { label: 'Clay Rives convertible payoff',    amt: clayBuyout,    est: false },
+    { label: 'Short-term debt retirement',       amt: shortTermDebt, est: false },
+    { label: '23 Henry elevator construction',   amt: elevator,      est: true  },
+    { label: 'AP retirement',                    amt: ap,            est: true  },
+    { label: 'Payroll / platform burn',          amt: payroll,       est: true  },
+    { label: '2026-27 renovation construction',  amt: construction,  est: false },
+  ];
+
+  let running = 0;
+  let html = `<table>
+    <thead>
+      <tr>
+        <th>Use</th>
+        <th style="text-align:right">Amount</th>
+        <th style="text-align:right">%</th>
+        <th style="text-align:right">Running</th>
+        <th style="text-align:right">Remaining</th>
+      </tr>
+    </thead>
+    <tbody>`;
+  rows.forEach(r => {
+    running += r.amt;
+    const remaining = Math.max(0, recap - running);
+    const pct = recap > 0 ? (r.amt / recap * 100).toFixed(1) : '0.0';
+    const flag = r.est ? ' <span style="color:var(--warning);font-size:10px;">(est)</span>' : '';
+    html += `<tr>
+      <td>${r.label}${flag}</td>
+      <td style="text-align:right">${bigMoney(r.amt)}</td>
+      <td style="text-align:right;color:var(--text-muted)">${pct}%</td>
+      <td style="text-align:right;color:var(--text-secondary)">${bigMoney(running)}</td>
+      <td style="text-align:right;color:var(--text-secondary)">${bigMoney(remaining)}</td>
+    </tr>`;
+  });
+  html += `<tr class="total">
+    <td>Total Uses</td>
+    <td style="text-align:right">${bigMoney(recap)}</td>
+    <td style="text-align:right">100.0%</td>
+    <td style="text-align:right">${bigMoney(recap)}</td>
+    <td style="text-align:right">${bigMoney(0)}</td>
+  </tr></tbody></table>`;
+  document.getElementById('uses-granular').innerHTML = html;
+}
+
+function renderCashflowChart(recap) {
+  // 36 months: May 2026 -> Apr 2029
+  const months = [];
+  const startYear = 2026;
+  const startMonth = 5; // May
+  for (let i = 0; i < 36; i++) {
+    const m = ((startMonth - 1 + i) % 12) + 1;
+    const y = startYear + Math.floor((startMonth - 1 + i) / 12);
+    months.push({ y: y, m: m, label: y + '-' + String(m).padStart(2, '0') });
+  }
+
+  // NOI anchors (annualized)
+  const noi2627 = adjustedNoi('ay2627');
+  const noi2728 = adjustedNoi('ay2728_mid');
+  const noi2829 = adjustedNoi('ay2829_mid');
+  const noi2930 = adjustedNoi('ay2930_mid');
+
+  // Pick academic year for a given calendar month
+  function noiForMonth(y, m) {
+    // AY runs Aug -> Jul roughly
+    let ay;
+    if ((y === 2026 && m >= 8) || (y === 2027 && m <= 7)) ay = noi2627;
+    else if ((y === 2027 && m >= 8) || (y === 2028 && m <= 7)) ay = noi2728;
+    else if ((y === 2028 && m >= 8) || (y === 2029 && m <= 7)) ay = noi2829;
+    else ay = noi2930;
+    return ay / 12;
+  }
+
+  // Series
+  const trancheIn = new Array(36).fill(0);
+  const htcIn = new Array(36).fill(0);
+  const leaseIn = new Array(36).fill(0);
+  const constrOut = new Array(36).fill(0);
+  const debtOut = new Array(36).fill(0);
+  const opexOut = new Array(36).fill(0);
+
+  // Tranche 2 inflow at month 1 (May 2026)
+  trancheIn[0] = recap;
+
+  // HTC receipts: Sherwin Williams future + company retained future, per the json
+  // Split across summer 2026 (50%), summer 2027 (30%), summer 2028 (15%), summer 2029 (5%)
+  const totalHtcFuture =
+    (RECAP.other_cash_sources && RECAP.other_cash_sources.sherwin_williams_htc_future || 2442587) +
+    (RECAP.other_cash_sources && RECAP.other_cash_sources.company_retained_htcs_future || 810815);
+  const htcSchedule = [
+    { y: 2026, m: 7, pct: 0.50 },  // July 2026
+    { y: 2027, m: 7, pct: 0.30 },
+    { y: 2028, m: 7, pct: 0.15 },
+    { y: 2029, m: 3, pct: 0.05 },
+  ];
+  htcSchedule.forEach(s => {
+    const idx = months.findIndex(mm => mm.y === s.y && mm.m === s.m);
+    if (idx >= 0) htcIn[idx] += totalHtcFuture * s.pct;
+  });
+
+  // Lease revenue = NOI / 12 annualized per month
+  // Operating opex = ~40% of gross rev; we keep NOI line (post-opex) cleaner, so use half split
+  // Simplification: leaseIn is NOI, opexOut is 0 to avoid double counting.
+  for (let i = 0; i < 36; i++) {
+    leaseIn[i] = noiForMonth(months[i].y, months[i].m);
+    opexOut[i] = 0;
+  }
+
+  // Construction draws: $9.1M program, spread across months 1-18 (May 26 -> Oct 27)
+  const totalConstr = (RECAP.remaining_capex && RECAP.remaining_capex.total_program) || 9100000;
+  for (let i = 0; i < 18; i++) {
+    constrOut[i] = totalConstr / 18;
+  }
+
+  // Debt service: senior interest-only ~6.5% on effective senior debt, monthly
+  const senior = effectiveSeniorDebt();
+  const monthlyDS = senior * 0.065 / 12;
+  for (let i = 0; i < 36; i++) debtOut[i] = monthlyDS;
+
+  // Cumulative cash
+  const cumulative = new Array(36).fill(0);
+  let running = 0;
+  for (let i = 0; i < 36; i++) {
+    running += trancheIn[i] + htcIn[i] + leaseIn[i] - constrOut[i] - debtOut[i] - opexOut[i];
+    cumulative[i] = running;
+  }
+
+  const x = months.map(m => m.label);
+
+  const traces = [
+    {
+      type: 'bar', name: 'Tranche Capital',
+      x: x, y: trancheIn,
+      marker: { color: '#8b5cf6' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+    },
+    {
+      type: 'bar', name: 'HTC Receipts',
+      x: x, y: htcIn,
+      marker: { color: '#34d399' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+    },
+    {
+      type: 'bar', name: 'Lease Revenue (NOI)',
+      x: x, y: leaseIn,
+      marker: { color: '#60a5fa' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+    },
+    {
+      type: 'bar', name: 'Construction Draws',
+      x: x, y: constrOut.map(v => -v),
+      marker: { color: '#f59e0b' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+    },
+    {
+      type: 'bar', name: 'Debt Service',
+      x: x, y: debtOut.map(v => -v),
+      marker: { color: '#ea580c' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+    },
+    {
+      type: 'scatter', name: 'Cumulative Cash',
+      mode: 'lines', x: x, y: cumulative,
+      line: { color: '#ff6b6b', width: 3, shape: 'spline' },
+      yaxis: 'y2',
+      hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+    },
+  ];
+
+  Plotly.newPlot('cashflow-chart', traces, {
+    paper_bgcolor: 'transparent',
+    plot_bgcolor: 'transparent',
+    font: { family: 'DM Sans', color: '#e8e8ed', size: 11 },
+    barmode: 'relative',
+    margin: { t: 30, r: 70, b: 70, l: 70 },
+    legend: { orientation: 'h', y: -0.25, font: { size: 10 } },
+    xaxis: { tickfont: { size: 9 }, tickangle: -60 },
+    yaxis: {
+      title: 'Monthly Flow ($)',
+      tickformat: '$,.0f',
+      gridcolor: 'rgba(255,255,255,0.04)',
+      tickfont: { size: 10 },
+    },
+    yaxis2: {
+      title: 'Cumulative Cash ($)',
+      tickformat: '$,.0f',
+      overlaying: 'y',
+      side: 'right',
+      gridcolor: 'transparent',
+      tickfont: { size: 10 },
+    },
+    height: 360,
+  }, { displayModeBar: false, responsive: true });
+}
+
+function renderStressTest(recap) {
+  const senior = effectiveSeniorDebt();
+  const cap = 0.0735;
+  const year = STATE.year;
+  const rawNoi = RECAP.noi_projections[year] || 0;
+
+  function scenario(hc) {
+    const noi = rawNoi * (1 + hc);
+    const ev = noi / cap;
+    const avail = ev - senior;
+    const newPrefCov = avail / recap;
+    const fpRemain = Math.max(0, avail - recap);
+    const fpCov = fpRemain / FOUNDATION_PARTNER_PREF;
+    return { noi, ev, avail, newPrefCov, fpRemain, fpCov };
+  }
+
+  const base = scenario(0.00);
+  const cons = scenario(-0.15);
+  const sev  = scenario(-0.30);
+
+  function card(cls, title, s) {
+    return `<div class="scenario-card ${cls}">
+      <h4>${title}</h4>
+      <div class="metric"><span>Adjusted NOI</span><span>${bigMoney(s.noi)}</span></div>
+      <div class="metric"><span>Exit Value @ 7.35%</span><span>${bigMoney(s.ev)}</span></div>
+      <div class="metric"><span>Less Senior Debt</span><span>${bigMoney(-senior)}</span></div>
+      <div class="metric"><span>Available to Pref</span><span>${bigMoney(s.avail)}</span></div>
+      <div class="metric"><span>New Pref Coverage</span><span style="color:${s.newPrefCov>=1.5?'var(--success)':s.newPrefCov>=1.0?'var(--warning)':'var(--accent-coral)'}">${s.newPrefCov.toFixed(2)}x</span></div>
+      <div class="metric"><span>Remaining for FP Pref</span><span>${bigMoney(s.fpRemain)}</span></div>
+      <div class="metric"><span>FP Pref Coverage</span><span style="color:${s.fpCov>=1.0?'var(--success)':s.fpCov>=0.5?'var(--warning)':'var(--accent-coral)'}">${s.fpCov.toFixed(2)}x</span></div>
+    </div>`;
+  }
+
+  document.getElementById('stress-test').innerHTML = `
+    <div class="scenario-grid">
+      ${card('base', 'Base (0% haircut)',         base)}
+      ${card('cons', 'Conservative (-15% NOI)',   cons)}
+      ${card('sev',  'Severe (-30% NOI)',         sev)}
+    </div>
+  `;
+}
+
+function renderLtvTable(recap) {
+  const rows = [
+    { ltv: 0.65 }, { ltv: 0.75 }, { ltv: 0.80 },
+  ];
+  let html = `<table class="ltv-table">
+    <thead>
+      <tr>
+        <th>LTV</th>
+        <th style="text-align:right">Construction Debt Proceeds</th>
+        <th style="text-align:right">Delta vs 65%</th>
+        <th style="text-align:right">Total Senior Debt</th>
+        <th style="text-align:right">New Pref Coverage</th>
+      </tr>
+    </thead>
+    <tbody>`;
+  const senior0 = SENIOR_DEBT;
+  const noi = adjustedNoi(STATE.year);
+  const ev = noi / STATE.cap;
+  rows.forEach(r => {
+    const constrDebt = BASE_CONSTR_DEBT * (r.ltv / BASE_LTV);
+    const delta = constrDebt - BASE_CONSTR_DEBT;
+    const totalSenior = senior0 + (constrDebt - BASE_CONSTR_DEBT);
+    const cov = (ev - totalSenior) / recap;
+    const isActive = Math.abs(r.ltv - STATE.ltv) < 0.005;
+    const rowStyle = isActive ? 'background:rgba(255,107,107,0.08);' : '';
+    html += `<tr style="${rowStyle}">
+      <td>${(r.ltv*100).toFixed(0)}%${isActive ? ' <span style="color:var(--accent-coral);font-size:10px;">&larr; selected</span>' : ''}</td>
+      <td style="text-align:right"><strong>${bigMoney(constrDebt)}</strong></td>
+      <td style="text-align:right;color:${delta>0?'var(--success)':'var(--text-muted)'}">${delta>0?'+':''}${bigMoney(delta)}</td>
+      <td style="text-align:right">${bigMoney(totalSenior)}</td>
+      <td style="text-align:right;color:${cov>=1.5?'var(--success)':cov>=1.0?'var(--warning)':'var(--accent-coral)'}">${cov.toFixed(2)}x</td>
+    </tr>`;
+  });
+  html += `</tbody></table>`;
+  document.getElementById('ltv-table').innerHTML = html;
+}
+
+function renderHtcSchedule() {
+  const htc = RECAP.htc || {};
+  const cr = htc.company_retained || {};
+  const is_ = htc.investor_syndicated || {};
+
+  // Bridge loan allocation (approx per instructions)
+  const bridge108 = 547000;
+  const bridge23h = 1886000;
+
+  const rows = [
+    {
+      prop: '721 Lancaster',
+      status: (cr['721_lancaster'] && cr['721_lancaster'].status) || '',
+      received: 0,
+      future: (cr['721_lancaster'] && cr['721_lancaster'].total) || 0,
+      year: (cr['721_lancaster'] && cr['721_lancaster'].year) || '',
+      bridge: 0,
+    },
+    {
+      prop: '1000 Ackerman',
+      status: (cr['1000_ackerman'] && cr['1000_ackerman'].status) || '',
+      received: 0,
+      future: (cr['1000_ackerman'] && cr['1000_ackerman'].total) || 0,
+      year: (cr['1000_ackerman'] && cr['1000_ackerman'].year) || '',
+      bridge: 0,
+    },
+    {
+      prop: '867 Lancaster',
+      status: (cr['867_lancaster'] && cr['867_lancaster'].status) || '',
+      received: 0,
+      future: (cr['867_lancaster'] && cr['867_lancaster'].total) || 0,
+      year: (cr['867_lancaster'] && cr['867_lancaster'].year) || '',
+      bridge: 0,
+    },
+    {
+      prop: '817 Comstock',
+      status: (cr['817_comstock'] && cr['817_comstock'].status) || '',
+      received: 0,
+      future: (cr['817_comstock'] && cr['817_comstock'].total) || 0,
+      year: (cr['817_comstock'] && cr['817_comstock'].year) || '',
+      bridge: 0,
+    },
+    {
+      prop: '108 Eddy (syndicated)',
+      status: (is_['108_eddy'] && is_['108_eddy'].status) || '',
+      received: (is_['108_eddy'] && is_['108_eddy'].cash_received_to_date) || 0,
+      future: (is_['108_eddy'] && is_['108_eddy'].future_cash) || 0,
+      year: 'Summer 2026',
+      bridge: bridge108,
+    },
+    {
+      prop: '23 Henry (syndicated)',
+      status: (is_['23_henry'] && is_['23_henry'].status) || '',
+      received: (is_['23_henry'] && is_['23_henry'].cash_received_to_date) || 0,
+      future: (is_['23_henry'] && is_['23_henry'].future_cash) || 0,
+      year: 'Summer 2026-27',
+      bridge: bridge23h,
+    },
+  ];
+
+  let totRecv = 0, totFut = 0, totBridge = 0, totNet = 0;
+  let body = '';
+  rows.forEach(r => {
+    const net = r.future - r.bridge;
+    totRecv += r.received; totFut += r.future; totBridge += r.bridge; totNet += net;
+    body += `<tr>
+      <td>${r.prop}</td>
+      <td style="color:var(--text-muted);font-size:11px;">${r.status}</td>
+      <td style="text-align:right">${bigMoney(r.received)}</td>
+      <td style="text-align:right">${bigMoney(r.future)}</td>
+      <td style="text-align:right;color:var(--text-muted)">${r.year}</td>
+      <td style="text-align:right">${r.bridge ? bigMoney(-r.bridge) : '—'}</td>
+      <td style="text-align:right;color:${net>=0?'var(--success)':'var(--accent-coral)'}">${bigMoney(net)}</td>
+    </tr>`;
+  });
+  body += `<tr class="total">
+    <td>Total</td><td></td>
+    <td style="text-align:right">${bigMoney(totRecv)}</td>
+    <td style="text-align:right">${bigMoney(totFut)}</td>
+    <td></td>
+    <td style="text-align:right">${bigMoney(-totBridge)}</td>
+    <td style="text-align:right">${bigMoney(totNet)}</td>
+  </tr>`;
+
+  const html = `<table>
+    <thead>
+      <tr>
+        <th>Property</th>
+        <th>Status</th>
+        <th style="text-align:right">Cash Received</th>
+        <th style="text-align:right">Future Cash</th>
+        <th style="text-align:right">Year Expected</th>
+        <th style="text-align:right">HTC Bridge Offset</th>
+        <th style="text-align:right">Net to Foundation</th>
+      </tr>
+    </thead>
+    <tbody>${body}</tbody>
+  </table>`;
+  document.getElementById('htc-table').innerHTML = html;
+}
+
+function renderOtherCashSources() {
+  const ocs = RECAP.other_cash_sources || {};
+  const rows = [
+    { source: 'Sherwin Williams HTC (future syndicated)',
+       amt: ocs.sherwin_williams_htc_future || 2442587,
+       timing: 'Summer 2026 - 2029',
+       status: 'In progress' },
+    { source: 'Company-retained HTCs (future)',
+       amt: ocs.company_retained_htcs_future || 810815,
+       timing: 'Summer 2026 - 2027',
+       status: 'Pending submission' },
+    { source: 'Visions 23 Henry junior LOC (undrawn)',
+       amt: ocs.visions_23_henry_loan_drawdown || 994000,
+       timing: '2026',
+       status: 'Available' },
+  ];
+  let total = 0;
+  let body = '';
+  rows.forEach(r => {
+    total += r.amt;
+    body += `<tr>
+      <td>${r.source}</td>
+      <td style="text-align:right">${bigMoney(r.amt)}</td>
+      <td style="text-align:right;color:var(--text-muted);font-size:11px;">${r.timing}</td>
+      <td style="text-align:right;color:var(--text-secondary);font-size:11px;">${r.status}</td>
+    </tr>`;
+  });
+  body += `<tr class="total">
+    <td>Total Future Cash Inflows</td>
+    <td style="text-align:right">${bigMoney(total)}</td>
+    <td></td><td></td>
+  </tr>`;
+  document.getElementById('other-cash-table').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th style="text-align:right">Amount</th>
+          <th style="text-align:right">Timing</th>
+          <th style="text-align:right">Status</th>
+        </tr>
+      </thead>
+      <tbody>${body}</tbody>
+    </table>`;
+}
+
+function renderRiskFlags() {
+  const flags = (RECAP.risk_flags || []).slice();
+  const order = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+  flags.sort((a, b) => (order[a.severity] ?? 9) - (order[b.severity] ?? 9));
+
+  let body = '';
+  flags.forEach(f => {
+    const cls = 'sev-row-' + f.severity.toLowerCase();
+    const badgeCls = 'sev-' + f.severity.toLowerCase();
+    body += `<tr class="${cls}">
+      <td><span class="sev-badge ${badgeCls}">${f.severity}</span></td>
+      <td style="font-family:'DM Sans',sans-serif;">${f.category}</td>
+      <td style="font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-primary);">${f.risk}</td>
+      <td style="font-family:'DM Sans',sans-serif;color:var(--text-secondary);font-size:11px;">${f.owner}</td>
+    </tr>`;
+  });
+  document.getElementById('risk-flags-table').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Severity</th>
+          <th>Category</th>
+          <th>Risk</th>
+          <th>Owner</th>
+        </tr>
+      </thead>
+      <tbody>${body}</tbody>
+    </table>`;
+}
+
+function renderSteveOpenItems() {
+  const items = RECAP.steve_open_items || [];
+  let body = '';
+  items.forEach(it => {
+    body += `<li>${it}</li>`;
+  });
+  document.getElementById('steve-open-items').innerHTML =
+    `<ul class="open-items">${body}</ul>`;
+}
+
+// ===============================================================
+// === EXPORT FUNCTIONS (CSV / TXT client-side)
+// ===============================================================
+
+function triggerDownload(filename, content, mime) {
+  const blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+
+function csvEscape(v) {
+  if (v == null) return '';
+  const s = String(v);
+  if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function exportSummaryCsv() {
+  const noi = adjustedNoi(STATE.year);
+  const ev = noi / STATE.cap;
+  const senior = effectiveSeniorDebt();
+  const avail = ev - senior;
+  const newPrefCov = avail / STATE.recap;
+  const fpRemain = Math.max(0, avail - STATE.recap);
+  const fpCov = fpRemain / FOUNDATION_PARTNER_PREF;
+
+  const rows = [
+    ['Metric', 'Value'],
+    ['Generated', new Date().toISOString()],
+    ['Tranche 2 amount', STATE.recap],
+    ['Tranche 1 (bridge)', TRANCHE_1],
+    ['Cap rate', STATE.cap],
+    ['Exit year', STATE.year],
+    ['NOI haircut applied', STATE.haircut],
+    ['Construction debt LTV', STATE.ltv],
+    ['Adjusted NOI (exit year)', Math.round(noi)],
+    ['Exit value', Math.round(ev)],
+    ['Effective senior debt', Math.round(senior)],
+    ['Proceeds to new pref', Math.round(avail)],
+    ['New pref coverage', newPrefCov.toFixed(3)],
+    ['Remaining for FP pref', Math.round(fpRemain)],
+    ['FP pref coverage', fpCov.toFixed(3)],
+    ['Foundation partner pref', Math.round(FOUNDATION_PARTNER_PREF)],
+  ];
+  const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n');
+  triggerDownload('recap_summary.csv', csv, 'text/csv;charset=utf-8');
+}
+
+function exportNoiCsv() {
+  const noi = RECAP.noi_projections || {};
+  const rows = [
+    ['Academic Year', 'Scenario', 'Raw NOI', 'Haircut', 'Adjusted NOI'],
+  ];
+  const keys = [
+    ['AY 26-27',     'base', 'ay2627'],
+    ['AY 27-28',     'low',  'ay2728_low'],
+    ['AY 27-28',     'mid',  'ay2728_mid'],
+    ['AY 27-28',     'high', 'ay2728_high'],
+    ['AY 28-29',     'low',  'ay2829_low'],
+    ['AY 28-29',     'mid',  'ay2829_mid'],
+    ['AY 28-29',     'high', 'ay2829_high'],
+    ['AY 29-30',     'low',  'ay2930_low'],
+    ['AY 29-30',     'mid',  'ay2930_mid'],
+    ['AY 29-30',     'high', 'ay2930_high'],
+  ];
+  keys.forEach(k => {
+    const raw = noi[k[2]];
+    if (typeof raw === 'number') {
+      const adj = raw * (1 + STATE.haircut);
+      rows.push([k[0], k[1], Math.round(raw), STATE.haircut, Math.round(adj)]);
+    }
+  });
+  if (typeof noi.jadian_view_27_28 === 'number') {
+    rows.push(['AY 27-28', 'jadian_view', Math.round(noi.jadian_view_27_28), 0, Math.round(noi.jadian_view_27_28)]);
+  }
+  const csv = rows.map(r => r.map(csvEscape).join(',')).join('\n');
+  triggerDownload('noi_projections.csv', csv, 'text/csv;charset=utf-8');
+}
+
+function exportRiskTxt() {
+  const flags = (RECAP.risk_flags || []).slice();
+  const order = { CRITICAL: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+  flags.sort((a, b) => (order[a.severity] ?? 9) - (order[b.severity] ?? 9));
+
+  let txt = 'FOUNDATION SEED PORTFOLIO RECAP - RISK FLAG REPORT\n';
+  txt += 'Generated: ' + new Date().toISOString() + '\n';
+  txt += '='.repeat(72) + '\n\n';
+
+  const groups = { CRITICAL: [], HIGH: [], MEDIUM: [], LOW: [] };
+  flags.forEach(f => { if (groups[f.severity]) groups[f.severity].push(f); });
+
+  ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].forEach(sev => {
+    if (groups[sev].length === 0) return;
+    txt += '[' + sev + ']  (' + groups[sev].length + ')\n';
+    txt += '-'.repeat(72) + '\n';
+    groups[sev].forEach((f, i) => {
+      txt += (i + 1) + '. ' + f.category + ' - Owner: ' + f.owner + '\n';
+      txt += '   ' + f.risk + '\n\n';
+    });
+    txt += '\n';
+  });
+
+  triggerDownload('risk_flag_report.txt', txt, 'text/plain;charset=utf-8');
 }
 
 // === EVENTS ===
@@ -768,6 +1608,20 @@ document.getElementById('ctrl-year').addEventListener('change', function() {
   STATE.year = this.value;
   render();
 });
+document.getElementById('ctrl-haircut').addEventListener('input', function() {
+  STATE.haircut = parseFloat(this.value);
+  document.getElementById('lbl-haircut').textContent = (STATE.haircut * 100).toFixed(0) + '%';
+  render();
+});
+document.getElementById('ctrl-ltv').addEventListener('input', function() {
+  STATE.ltv = parseFloat(this.value);
+  document.getElementById('lbl-ltv').textContent = (STATE.ltv * 100).toFixed(0) + '%';
+  render();
+});
+
+document.getElementById('btn-export-summary').addEventListener('click', exportSummaryCsv);
+document.getElementById('btn-export-noi').addEventListener('click', exportNoiCsv);
+document.getElementById('btn-export-risks').addEventListener('click', exportRiskTxt);
 
 render();
 </script>
