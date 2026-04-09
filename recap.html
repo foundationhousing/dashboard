@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Foundation Seed Portfolio Recap</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root {
+  --bg-base: #08080d;
+  --bg-surface-0: #0e0e15;
+  --bg-surface-1: #14141e;
+  --bg-surface-2: #1a1a28;
+  --bg-surface-3: #222233;
+  --border: rgba(255,255,255,0.06);
+  --border-accent: rgba(255,255,255,0.12);
+  --text-primary: #e8e8ed;
+  --text-secondary: #7a7a90;
+  --text-muted: #55556a;
+  --accent-coral: #ff6b6b;
+  --accent-coral-dim: rgba(255,107,107,0.15);
+  --accent-purple: #8b5cf6;
+  --success: #34d399;
+  --warning: #fbbf24;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-surface-3); border-radius: 4px; }
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 20px;
+  margin-bottom: 28px;
+}
+.header h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.header .subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+.header .meta {
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ---------- Tranche Banner ---------- */
+.tranche-banner {
+  background: linear-gradient(135deg, var(--bg-surface-1), var(--bg-surface-2));
+  border: 1px solid var(--border-accent);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+.tranche-banner-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-coral);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+}
+.tranche-flow {
+  display: grid;
+  grid-template-columns: 1fr 24px 1fr 24px 1fr;
+  gap: 0;
+  align-items: center;
+}
+.tranche-card {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-accent);
+  border-radius: 8px;
+  padding: 14px 16px;
+  position: relative;
+}
+.tranche-card .tag {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+.tranche-card .name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.tranche-card .amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-coral);
+  margin-bottom: 4px;
+}
+.tranche-card .date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.tranche-card .desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+.tranche-arrow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 18px;
+}
+@media (max-width: 900px) {
+  .tranche-flow { grid-template-columns: 1fr; gap: 8px; }
+  .tranche-arrow { transform: rotate(90deg); height: 24px; }
+}
+
+/* ---------- Control Panel ---------- */
+.controls {
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.controls-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-coral);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+}
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.control label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.control label .value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.control input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--bg-surface-3);
+  border-radius: 3px;
+  outline: none;
+}
+.control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent-coral);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 0 4px rgba(255,107,107,0.15);
+}
+.control input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--accent-coral);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 0 4px rgba(255,107,107,0.15);
+}
+.control select {
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-accent);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ---------- KPI Cards ---------- */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 22px;
+}
+.kpi-card.highlight {
+  border-color: var(--accent-coral);
+  background: linear-gradient(135deg, var(--bg-surface-1), rgba(255,107,107,0.04));
+}
+.kpi-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.kpi-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.kpi-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+.kpi-value.coverage-good { color: var(--success); }
+.kpi-value.coverage-warn { color: var(--warning); }
+.kpi-value.coverage-bad { color: var(--accent-coral); }
+
+/* ---------- Panels ---------- */
+.panel {
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 16px;
+}
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 900px) { .row-2 { grid-template-columns: 1fr; } }
+
+/* ---------- Tables ---------- */
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-accent);
+}
+td {
+  padding: 10px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+}
+td:first-child { font-family: 'DM Sans', sans-serif; color: var(--text-secondary); }
+tr:hover td { background: var(--bg-surface-2); }
+tr.total td {
+  font-weight: 700;
+  border-top: 2px solid var(--border-accent);
+  color: var(--text-primary);
+}
+tr.total td:first-child { color: var(--text-primary); }
+.sens-matrix td {
+  text-align: center;
+  font-weight: 700;
+  border: 1px solid var(--bg-surface-0);
+}
+.sens-matrix th { text-align: center; }
+
+/* ---------- Capital Stack Bar ---------- */
+.capstack-bar {
+  display: flex;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.capstack-segment {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid rgba(0,0,0,0.4);
+  transition: all 250ms cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
+}
+.capstack-segment::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.12), transparent 50%, rgba(0,0,0,0.15));
+  pointer-events: none;
+}
+.capstack-segment .seg-label {
+  position: relative;
+  z-index: 2;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.95);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  white-space: nowrap;
+  padding: 0 4px;
+  text-align: center;
+  line-height: 1.3;
+}
+.capstack-segment .seg-name {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.bar-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.story {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+.story p { margin-bottom: 14px; }
+.story strong { color: var(--success); }
+.story .accent { color: var(--accent-coral); }
+
+.gen-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <div>
+    <h1>Seed Portfolio Recap</h1>
+    <div class="subtitle">Foundation Assets — Capital recapitalization analysis</div>
+  </div>
+  <div class="meta">
+    Generated 2026-04-09<br/>
+    Confidential
+  </div>
+</div>
+
+<!-- ========== TRANCHE STRUCTURE BANNER ========== -->
+<div class="tranche-banner">
+  <div class="tranche-banner-title">Three-Tranche Capital Structure</div>
+  <div class="tranche-flow">
+    <div class="tranche-card">
+      <div class="tag">Tranche 1</div>
+      <div class="name">Bridge LOC</div>
+      <div class="amount">$500K</div>
+      <div class="date">Closes Apr 10, 2026</div>
+      <div class="desc">Quick-close bridge funding. Functions as LOC, knocked out by Tranche 2.</div>
+    </div>
+    <div class="tranche-arrow">→</div>
+    <div class="tranche-card" style="border-color: var(--accent-coral);">
+      <div class="tag">Tranche 2 — Primary</div>
+      <div class="name">Recap Investment</div>
+      <div class="amount" id="t2-amount">$14.0M</div>
+      <div class="date">Target close: May 15, 2026</div>
+      <div class="desc">Includes refinance/payoff of Tranche 1. Funds Clay buyout, debt retirement, growth.</div>
+    </div>
+    <div class="tranche-arrow">→</div>
+    <div class="tranche-card">
+      <div class="tag">Tranche 3</div>
+      <div class="name">JV Equity</div>
+      <div class="amount">TBD</div>
+      <div class="date">Original JV terms</div>
+      <div class="desc">Future portfolio expansion via the original Jadian platform JV.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== INTERACTIVE CONTROLS ========== -->
+<div class="controls">
+  <div class="controls-title">Adjust Tranche 2 Assumptions</div>
+  <div class="controls-grid">
+    <div class="control">
+      <label>Tranche 2 amount <span class="value" id="lbl-recap">$14.0M</span></label>
+      <input type="range" id="ctrl-recap" min="5000000" max="25000000" step="500000" value="14000000"/>
+    </div>
+    <div class="control">
+      <label>Exit cap rate <span class="value" id="lbl-cap">7.35%</span></label>
+      <input type="range" id="ctrl-cap" min="0.0635" max="0.0835" step="0.0005" value="0.0735"/>
+    </div>
+    <div class="control">
+      <label>Exit year</label>
+      <select id="ctrl-year">
+        <option value="ay2728_mid">AY 2027-28 (post-stabilization)</option>
+        <option value="ay2829_mid">AY 2028-29</option>
+        <option value="ay2930_mid" selected>AY 2029-30 (base case)</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- ========== HEADLINE KPIs ========== -->
+<div class="kpi-row" id="kpi-row"></div>
+
+<!-- ========== CAPITAL STACK COMPARE ========== -->
+<div class="panel">
+  <div class="panel-title">Capital Stack — Pre vs Post Recap (Scenario C: New Pref Senior)</div>
+  <div id="capstack-compare"></div>
+  <div style="font-size:11px;color:var(--text-muted);margin-top:12px;">
+    New partner pref sits SENIOR to Foundation partner pref (Ryan, Steve, Laney, Greg).
+    Foundation partner pref is subordinated to align incentives — partners absorb downside in exchange for upside participation.
+  </div>
+</div>
+
+<!-- ========== SOURCES & USES ========== -->
+<div class="row-2">
+  <div class="panel">
+    <div class="panel-title">Sources of Funds</div>
+    <div id="sources-table"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Uses of Funds</div>
+    <div id="uses-table"></div>
+  </div>
+</div>
+
+<!-- ========== EXIT WATERFALL ========== -->
+<div class="panel">
+  <div class="panel-title">Exit Distribution Waterfall</div>
+  <div id="exit-waterfall"></div>
+</div>
+
+<!-- ========== SENSITIVITY MATRIX ========== -->
+<div class="panel">
+  <div class="panel-title">Coverage Sensitivity — Cap Rate × Exit Year</div>
+  <div id="sens-matrix"></div>
+</div>
+
+<!-- ========== NOI TRAJECTORY ========== -->
+<div class="panel">
+  <div class="panel-title">NOI Growth Trajectory</div>
+  <div id="noi-chart" style="height:300px;"></div>
+</div>
+
+<!-- ========== STORY ========== -->
+<div class="panel">
+  <div class="panel-title">Investment Thesis</div>
+  <div class="story" id="story"></div>
+</div>
+
+<div class="gen-note">
+  Foundation Assets LLC · Confidential · Generated 2026-04-09
+</div>
+
+</div>
+
+<script>
+const RECAP = {"jadian_investment": 14000000, "pref_replace": 3528584, "other_uses_total": 10471416, "uses_breakdown": {"clay_buyout": 3528584, "retire_non_senior_debt": 1524122, "ap_retirement": 2000000, "payroll_platform": 1500000, "construction_2026_27": 5447294}, "pre_recap": {"re_value_income": 50168031, "re_value_book": 40829847, "senior_debt": 27730851, "non_senior_debt": 1524122, "pref_equity": 14202946, "common_equity_gross": 6710112, "common_equity_adj": 5032584}, "post_recap_a": {"description": "Jadian pari-passu with Foundation partner pref (Ryan/Steve/Laney/Greg). Clay fully cashed out.", "re_value_income": 50168031, "senior_debt": 27730851, "non_senior_debt": 0, "legacy_pref": 10674362, "jadian_pref": 14000000, "common_equity": -2237182}, "post_recap_c": {"description": "Jadian SENIOR to Foundation partner pref. Clay fully cashed out.", "re_value_income": 50168031, "senior_debt": 27730851, "non_senior_debt": 0, "jadian_pref_senior": 14000000, "legacy_pref_junior": 10674362, "common_equity": -2237182}, "noi_projections": {"ay2627": 1712082.0, "ay2728_low": 3140349.0, "ay2728_mid": 3358623.0, "ay2728_high": 3477042.0, "ay2829_low": 3261299.0, "ay2829_mid": 3486659.0, "ay2829_high": 3621874.0, "ay2930_low": 3374808.0, "ay2930_mid": 3607481.0, "ay2930_high": 3747086.0}, "sensitivity_matrix": {"cap_rates": [0.0685, 0.071, 0.0735, 0.076, 0.0785], "years": ["AY 27-28", "AY 28-29", "AY 29-30"]}, "coverage_target": 1.5, "sources": {"noi_projections": "sot_noi_projections_stabilized_v5.0.csv (Steve approved)", "capital_metrics": "sot_capital_metrics_v1.0.json", "recap_assumptions": "Internal model \u2014 Ryan"}, "pref_breakdown": {"clay_rives_pre": 3528584, "clay_rives_post": 0, "ryan_day": 8619561, "steve_vassallo": 1384652, "laney_vassallo": 544468, "greg_vassallo": 125681, "foundation_partners_total": 10674362}, "anchor_cap_rate": 0.0735, "cap_rate_range": [0.0685, 0.0785], "cap_rate_basis": "Anchored to 7.35% \u2014 Jadian historical underwriting at 7.75% adjusted for stabilized seed portfolio quality", "tranches": {"tranche_1": {"name": "Bridge LOC", "amount": 500000, "closing_date": "2026-04-10", "description": "Quick-close bridge funding. Functions as LOC, knocked out by tranche 2.", "use": "Bridge cash needs between 4/10 and 5/15"}, "tranche_2": {"name": "Recap Investment", "amount": 14000000, "closing_date_target": "2026-05-15", "description": "Main recap. Includes refinance/payoff of tranche 1 LOC.", "use": "Clay buyout + non-senior debt + AP + payroll + construction"}, "tranche_3": {"name": "JV Equity (TBD)", "amount": null, "closing_date_target": "TBD", "description": "Original JV deal terms \u2014 full Jadian platform investment", "use": "Future portfolio expansion"}}, "tranche_2_net_new": 13500000, "focus_scenario": "C", "scenario_C_rationale": "New partner sits SENIOR to Foundation partner pref. Foundation partners are subordinated for the value creation thesis."};
+const TRANCHE_1 = 500000;  // Bridge LOC
+
+const STATE = {
+  recap: 14000000,
+  cap: 0.0735,
+  year: 'ay2930_mid',
+};
+
+function bigMoney(v) {
+  if (v == null || isNaN(v)) return '—';
+  const abs = Math.abs(v);
+  if (abs >= 1e6) return (v < 0 ? '-' : '') + '$' + (abs/1e6).toFixed(2) + 'M';
+  if (abs >= 1e3) return (v < 0 ? '-' : '') + '$' + (abs/1e3).toFixed(0) + 'K';
+  return (v < 0 ? '-' : '') + '$' + abs.toFixed(0);
+}
+function fmtPct(v) {
+  if (v == null || isNaN(v)) return '—';
+  return (v * 100).toFixed(1) + '%';
+}
+function fmtCov(c) {
+  if (c >= 1.5) return 'coverage-good';
+  if (c >= 1.0) return 'coverage-warn';
+  return 'coverage-bad';
+}
+function yearLabel(key) {
+  return {ay2728_mid:'AY 27-28', ay2829_mid:'AY 28-29', ay2930_mid:'AY 29-30'}[key] || key;
+}
+
+const FOUNDATION_PARTNER_PREF = RECAP.pre_recap.pref_equity - 3528584;  // Total pref minus Clay
+const SENIOR_DEBT = RECAP.pre_recap.senior_debt;
+const RE_VALUE = RECAP.pre_recap.re_value_income;
+
+function render() {
+  const noi = RECAP.noi_projections[STATE.year];
+  const exitVal = noi / STATE.cap;
+  const recap = STATE.recap;
+
+  // Scenario C: new pref is SENIOR
+  const proceeds_after_senior = exitVal - SENIOR_DEBT;
+  const proceeds_for_new_pref = proceeds_after_senior;
+  const new_pref_coverage = proceeds_for_new_pref / recap;
+  const remaining_for_fp = Math.max(0, proceeds_after_senior - recap);
+  const fp_coverage = remaining_for_fp / FOUNDATION_PARTNER_PREF;
+
+  // Update tranche banner amount
+  document.getElementById('t2-amount').textContent = '$' + (recap / 1e6).toFixed(1) + 'M';
+
+  // === KPIs ===
+  const kpiEl = document.getElementById('kpi-row');
+  kpiEl.innerHTML =
+    kpiCard('Tranche 2 Amount', bigMoney(recap), 'Net new: ' + bigMoney(recap - TRANCHE_1) + ' (T1 LOC retired)', false) +
+    kpiCard('Exit Value', bigMoney(exitVal), yearLabel(STATE.year) + ' NOI ÷ ' + fmtPct(STATE.cap), false) +
+    kpiCard('New Pref Coverage', new_pref_coverage.toFixed(2) + 'x', bigMoney(proceeds_for_new_pref) + ' available · senior to FP pref', true, fmtCov(new_pref_coverage)) +
+    kpiCard('FP Pref Coverage', fp_coverage.toFixed(2) + 'x', bigMoney(remaining_for_fp) + ' available · subordinated', false, fmtCov(fp_coverage));
+
+  // === SOURCES ===
+  document.getElementById('sources-table').innerHTML = `
+    <table>
+      <thead><tr><th>Source</th><th style="text-align:right">Amount</th></tr></thead>
+      <tbody>
+        <tr><td>Tranche 1: Bridge LOC (refinanced by T2)</td><td style="text-align:right;color:var(--text-muted);">${bigMoney(TRANCHE_1)}</td></tr>
+        <tr><td>Tranche 2: Net new equity</td><td style="text-align:right">${bigMoney(recap - TRANCHE_1)}</td></tr>
+        <tr class="total"><td>Total Tranche 2 (gross)</td><td style="text-align:right">${bigMoney(recap)}</td></tr>
+      </tbody>
+    </table>
+  `;
+
+  // === USES ===
+  const clayBuyout = Math.min(3528584, recap * 0.25);
+  const nonSenior = Math.min(1524122, recap * 0.11);
+  const t1Refi = TRANCHE_1;
+  const remaining = recap - clayBuyout - nonSenior - t1Refi;
+  const ap = Math.max(0, Math.min(2000000, remaining * 0.30));
+  const payroll = Math.max(0, Math.min(1500000, remaining * 0.22));
+  const construction = Math.max(0, remaining - ap - payroll);
+
+  document.getElementById('uses-table').innerHTML = `
+    <table>
+      <thead><tr><th>Use</th><th style="text-align:right">Amount</th><th style="text-align:right">%</th></tr></thead>
+      <tbody>
+        <tr><td>Refinance Tranche 1 LOC</td><td style="text-align:right">${bigMoney(t1Refi)}</td><td style="text-align:right">${(t1Refi/recap*100).toFixed(0)}%</td></tr>
+        <tr><td>Buy out Clay Rives (full)</td><td style="text-align:right">${bigMoney(clayBuyout)}</td><td style="text-align:right">${(clayBuyout/recap*100).toFixed(0)}%</td></tr>
+        <tr><td>Retire non-senior debt</td><td style="text-align:right">${bigMoney(nonSenior)}</td><td style="text-align:right">${(nonSenior/recap*100).toFixed(0)}%</td></tr>
+        <tr><td>AP retirement</td><td style="text-align:right">${bigMoney(ap)}</td><td style="text-align:right">${(ap/recap*100).toFixed(0)}%</td></tr>
+        <tr><td>Payroll / platform</td><td style="text-align:right">${bigMoney(payroll)}</td><td style="text-align:right">${(payroll/recap*100).toFixed(0)}%</td></tr>
+        <tr><td>2026-27 reno construction</td><td style="text-align:right">${bigMoney(construction)}</td><td style="text-align:right">${(construction/recap*100).toFixed(0)}%</td></tr>
+        <tr class="total"><td>Total Uses</td><td style="text-align:right">${bigMoney(recap)}</td><td style="text-align:right">100%</td></tr>
+      </tbody>
+    </table>
+  `;
+
+  renderCapStackCompare(recap);
+  renderExitWaterfall(exitVal, recap, new_pref_coverage, fp_coverage);
+  renderSensitivity(recap);
+  renderNoiChart();
+  renderStory(noi, exitVal, new_pref_coverage, construction);
+}
+
+function kpiCard(label, value, sub, highlight, valClass) {
+  return `<div class="kpi-card${highlight ? ' highlight' : ''}">
+    <div class="kpi-label">${label}</div>
+    <div class="kpi-value${valClass ? ' ' + valClass : ''}">${value}</div>
+    <div class="kpi-sub">${sub}</div>
+  </div>`;
+}
+
+function renderCapStackCompare(recap) {
+  const pre = RECAP.pre_recap;
+  const total = pre.re_value_income;
+
+  const preLayers = [
+    { short: 'Senior',  value: SENIOR_DEBT, color: '#dc2626' },
+    { short: 'Non-Sr',  value: pre.non_senior_debt, color: '#ea580c' },
+    { short: 'Clay',    value: 3528584, color: '#a855f7' },
+    { short: 'FP Pref', value: FOUNDATION_PARTNER_PREF, color: '#f59e0b' },
+    { short: 'Common',  value: Math.max(0, total - SENIOR_DEBT - pre.non_senior_debt - pre.pref_equity), color: '#10b981' },
+  ];
+
+  const postLayers = [
+    { short: 'Senior',       value: SENIOR_DEBT, color: '#dc2626' },
+    { short: 'New Pref Sr',  value: recap, color: '#8b5cf6' },
+    { short: 'FP Pref Jr',   value: FOUNDATION_PARTNER_PREF, color: '#f59e0b' },
+    { short: 'Common',       value: Math.max(0, total - SENIOR_DEBT - recap - FOUNDATION_PARTNER_PREF), color: '#10b981' },
+  ];
+
+  const buildBar = (label, layers, totalForPct) => {
+    let h = `<div style="margin-bottom:18px;">`;
+    h += `<div class="bar-label"><span>${label}</span><span>Total ${bigMoney(totalForPct)}</span></div>`;
+    h += `<div class="capstack-bar">`;
+    layers.forEach(l => {
+      const pct = (l.value / totalForPct) * 100;
+      const wide = pct > 7;
+      h += `<div class="capstack-segment" style="flex:${l.value} ${l.value} 0; background:${l.color};">`;
+      if (wide) {
+        h += `<div class="seg-label"><span class="seg-name">${l.short}</span>${bigMoney(l.value)}</div>`;
+      }
+      h += `</div>`;
+    });
+    h += `</div></div>`;
+    return h;
+  };
+
+  document.getElementById('capstack-compare').innerHTML =
+    buildBar('PRE-RECAP', preLayers, total) +
+    buildBar('POST-RECAP — New Pref senior to Foundation Partner Pref', postLayers, total);
+}
+
+function renderExitWaterfall(exitVal, recap, newPrefCov, fpCov) {
+  const remaining_after_new_pref = exitVal - SENIOR_DEBT - recap;
+  let html = `<table>
+    <thead><tr><th>Step</th><th style="text-align:right">Amount</th></tr></thead>
+    <tbody>
+      <tr><td>Exit Value (NOI ÷ Cap)</td><td style="text-align:right;font-weight:700;">${bigMoney(exitVal)}</td></tr>
+      <tr><td>Less: Senior Debt</td><td style="text-align:right;color:var(--accent-coral);">${bigMoney(-SENIOR_DEBT)}</td></tr>
+      <tr><td>= Available to Pref Layers</td><td style="text-align:right;color:var(--success);font-weight:700;">${bigMoney(exitVal - SENIOR_DEBT)}</td></tr>
+      <tr><td>Less: New Pref (Senior, ${bigMoney(recap)})</td><td style="text-align:right;color:var(--accent-coral);">${bigMoney(-recap)}</td></tr>
+      <tr><td>= Remaining for FP Pref</td><td style="text-align:right;color:${remaining_after_new_pref >= FOUNDATION_PARTNER_PREF ? 'var(--success)' : 'var(--warning)'};font-weight:700;">${bigMoney(remaining_after_new_pref)}</td></tr>
+      <tr><td style="color:var(--text-muted);">FP Pref needed</td><td style="text-align:right;color:var(--text-muted);">${bigMoney(FOUNDATION_PARTNER_PREF)}</td></tr>
+      <tr class="total"><td>New Pref Coverage</td><td style="text-align:right;font-size:20px;color:${newPrefCov >= 1.5 ? 'var(--success)' : newPrefCov >= 1.0 ? 'var(--warning)' : 'var(--accent-coral)'};">${newPrefCov.toFixed(2)}x</td></tr>
+      <tr><td>FP Pref Coverage</td><td style="text-align:right;font-size:14px;color:${fpCov >= 1.0 ? 'var(--success)' : fpCov >= 0.5 ? 'var(--warning)' : 'var(--accent-coral)'};">${fpCov.toFixed(2)}x</td></tr>
+    </tbody>
+  </table>`;
+  document.getElementById('exit-waterfall').innerHTML = html;
+}
+
+function renderSensitivity(recap) {
+  const caps = [0.0685, 0.0710, 0.0735, 0.0760, 0.0785];
+  const years = [
+    { label: 'AY 27-28', key: 'ay2728_mid' },
+    { label: 'AY 28-29', key: 'ay2829_mid' },
+    { label: 'AY 29-30', key: 'ay2930_mid' },
+  ];
+
+  let html = `<table class="sens-matrix"><thead><tr><th>Cap Rate</th>`;
+  years.forEach(y => html += `<th>${y.label}</th>`);
+  html += `</tr></thead><tbody>`;
+
+  caps.forEach(cap => {
+    const isAnchor = Math.abs(cap - 0.0735) < 0.0001;
+    html += `<tr><td style="font-family:'JetBrains Mono',monospace;color:${isAnchor ? 'var(--accent-coral)' : 'var(--text-secondary)'};font-weight:${isAnchor ? '700' : '500'};">${(cap*100).toFixed(2)}%${isAnchor ? ' ←' : ''}</td>`;
+    years.forEach(y => {
+      const noi = RECAP.noi_projections[y.key];
+      const ev = noi / cap;
+      const cov = (ev - SENIOR_DEBT) / recap;
+      let color, bg;
+      if (cov >= 1.5) { color = 'var(--success)'; bg = 'rgba(52,211,153,0.12)'; }
+      else if (cov >= 1.0) { color = 'var(--warning)'; bg = 'rgba(251,191,36,0.12)'; }
+      else { color = 'var(--accent-coral)'; bg = 'rgba(255,107,107,0.12)'; }
+      html += `<td style="color:${color};background:${bg};">${cov.toFixed(2)}x</td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table>`;
+  html += `<div style="font-size:10px;color:var(--text-muted);margin-top:10px;">Anchor: 7.35% (Jadian historical 7.75% adjusted for stabilized seed quality) · New pref senior to FP pref · ≥ 1.5x green · 1.0-1.5x yellow · < 1.0x red</div>`;
+
+  document.getElementById('sens-matrix').innerHTML = html;
+}
+
+function renderNoiChart() {
+  const noi = RECAP.noi_projections;
+  const trace = {
+    type: 'bar',
+    x: ['AY 26-27', 'AY 27-28', 'AY 28-29', 'AY 29-30'],
+    y: [noi.ay2627, noi.ay2728_mid, noi.ay2829_mid, noi.ay2930_mid],
+    marker: { color: ['#7a7a90', '#f59e0b', '#10b981', '#10b981'] },
+    text: [bigMoney(noi.ay2627), bigMoney(noi.ay2728_mid), bigMoney(noi.ay2829_mid), bigMoney(noi.ay2930_mid)],
+    textposition: 'auto',
+    textfont: { family: 'JetBrains Mono', size: 13, color: '#fff' },
+    hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+  };
+
+  Plotly.newPlot('noi-chart', [trace], {
+    paper_bgcolor: 'transparent',
+    plot_bgcolor: 'transparent',
+    font: { family: 'DM Sans', color: '#e8e8ed' },
+    margin: { t: 30, r: 20, b: 50, l: 70 },
+    xaxis: { tickfont: { size: 11 } },
+    yaxis: { tickformat: '$,.0f', gridcolor: 'rgba(255,255,255,0.04)', tickfont: { size: 10 } },
+    annotations: [{
+      text: 'Construction completes → +98% NOI',
+      x: 1.5, y: noi.ay2728_mid * 1.05,
+      showarrow: false,
+      font: { family: 'DM Sans', size: 12, color: '#f59e0b' },
+    }],
+    height: 280,
+  }, { displayModeBar: false, responsive: true });
+}
+
+function renderStory(noi, exitVal, coverage, construction) {
+  const noiCurrent = RECAP.noi_projections.ay2627;
+  const growth = (((noi / noiCurrent) - 1) * 100).toFixed(0);
+  document.getElementById('story').innerHTML = `
+    <p><strong class="accent">The thesis:</strong> A $${(STATE.recap/1e6).toFixed(1)}M Tranche 2 investment unlocks the construction capital that creates the equity that pays the new partner back — at <strong>${coverage.toFixed(2)}x principal coverage</strong> on the base case.</p>
+    <p>$${(construction/1e6).toFixed(1)}M of the recap funds the 2026-27 renovation program — completing 18 properties currently offline and adding 25 net new beds. This drives NOI from <strong>${bigMoney(noiCurrent)}</strong> (current) to <strong>${bigMoney(noi)}</strong> (${yearLabel(STATE.year)}), a <strong>+${growth}% increase</strong>.</p>
+    <p>At a ${fmtPct(STATE.cap)} cap rate, the portfolio values at <strong>${bigMoney(exitVal)}</strong>. The new partner sits SENIOR to Foundation partner pref equity — Foundation partners (Ryan, Steve, Laney, Greg) absorb the first-loss risk and align with the thesis.</p>
+    <p>Tranche 1 ($500K bridge LOC closing 4/10) provides immediate working capital between now and the May 15 Tranche 2 close. Tranche 1 is automatically refinanced into Tranche 2 at close.</p>
+    <p style="color:var(--text-secondary);font-size:13px;">Use the controls above to model different recap amounts, cap rates, and exit years.</p>
+  `;
+}
+
+// === EVENTS ===
+document.getElementById('ctrl-recap').addEventListener('input', function() {
+  STATE.recap = parseFloat(this.value);
+  document.getElementById('lbl-recap').textContent = '$' + (STATE.recap / 1e6).toFixed(1) + 'M';
+  render();
+});
+document.getElementById('ctrl-cap').addEventListener('input', function() {
+  STATE.cap = parseFloat(this.value);
+  document.getElementById('lbl-cap').textContent = (STATE.cap * 100).toFixed(2) + '%';
+  render();
+});
+document.getElementById('ctrl-year').addEventListener('change', function() {
+  STATE.year = this.value;
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
