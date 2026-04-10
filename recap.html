@@ -7,48 +7,55 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
+/* ============================================================================
+   FOUNDATION HOUSING BRAND PALETTE
+   Primary teal #18505c sourced from foundation logo (760×184 wordmark, 45,462px)
+   Audited and committed to brand 2026-04-09. The accent variable is named
+   --accent-coral for backwards compat with existing CSS class names; the
+   actual color is now Foundation teal.
+   ============================================================================ */
 :root {
   /* Dark theme (default variables) */
-  --bg-base: #08080d;
-  --bg-surface-0: #0e0e15;
-  --bg-surface-1: #14141e;
-  --bg-surface-2: #1a1a28;
-  --bg-surface-3: #222233;
-  --border: rgba(255,255,255,0.06);
-  --border-accent: rgba(255,255,255,0.12);
-  --text-primary: #e8e8ed;
-  --text-secondary: #7a7a90;
-  --text-muted: #55556a;
-  --accent-coral: #ff6b6b;
-  --accent-coral-dim: rgba(255,107,107,0.15);
-  --accent-purple: #8b5cf6;
-  --success: #34d399;
-  --warning: #fbbf24;
-  --chart-grid: rgba(255,255,255,0.04);
-  --chart-text: #e8e8ed;
-  --scroll-thumb: #222233;
-  --row-zebra: rgba(255,255,255,0.02);
+  --bg-base: #0a1418;             /* deep teal-black */
+  --bg-surface-0: #0e1c21;
+  --bg-surface-1: #122428;
+  --bg-surface-2: #173036;
+  --bg-surface-3: #1f3d44;
+  --border: rgba(204,224,228,0.08);
+  --border-accent: rgba(204,224,228,0.16);
+  --text-primary: #e8eded;
+  --text-secondary: #8aa0a6;
+  --text-muted: #5a7077;
+  --accent-coral: #5fb0c0;          /* lighter teal for visibility on dark */
+  --accent-coral-dim: rgba(95,176,192,0.16);
+  --accent-purple: #c08a3e;         /* warm copper accent (institutional) */
+  --success: #6fb38a;
+  --warning: #d4a14a;
+  --chart-grid: rgba(204,224,228,0.06);
+  --chart-text: #e8eded;
+  --scroll-thumb: #1f3d44;
+  --row-zebra: rgba(204,224,228,0.02);
 }
 body.theme-light {
-  --bg-base: #f8fafc;
+  --bg-base: #fafaf7;               /* warm off-white */
   --bg-surface-0: #ffffff;
   --bg-surface-1: #ffffff;
-  --bg-surface-2: #f1f5f9;
-  --bg-surface-3: #e2e8f0;
-  --border: rgba(0,0,0,0.08);
-  --border-accent: rgba(0,0,0,0.15);
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --accent-coral: #e11d48;
-  --accent-coral-dim: rgba(225,29,72,0.12);
-  --accent-purple: #7c3aed;
-  --success: #059669;
-  --warning: #d97706;
-  --chart-grid: rgba(15,23,42,0.06);
-  --chart-text: #0f172a;
-  --scroll-thumb: #cbd5e1;
-  --row-zebra: rgba(15,23,42,0.02);
+  --bg-surface-2: #f3f1ec;          /* cream */
+  --bg-surface-3: #e8e3da;
+  --border: rgba(24,80,92,0.10);
+  --border-accent: rgba(24,80,92,0.20);
+  --text-primary: #0a1a1f;          /* near-black with teal undertone */
+  --text-secondary: #455b62;
+  --text-muted: #8a9a9f;
+  --accent-coral: #18505c;          /* FOUNDATION BRAND PRIMARY (logo teal) */
+  --accent-coral-dim: rgba(24,80,92,0.10);
+  --accent-purple: #c08a3e;         /* warm copper accent */
+  --success: #4a7a4a;               /* muted forest green */
+  --warning: #b8862e;               /* mustard */
+  --chart-grid: rgba(24,80,92,0.08);
+  --chart-text: #0a1a1f;
+  --scroll-thumb: #c8c0b2;
+  --row-zebra: rgba(24,80,92,0.025);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
@@ -93,7 +100,7 @@ body {
   white-space: nowrap;
 }
 .cat-bridge-refi      { background: rgba(139,92,246,0.18); color: var(--accent-purple); border: 1px solid rgba(139,92,246,0.35); }
-.cat-pref-equity-recap{ background: rgba(168,85,247,0.18); color: #a855f7; border: 1px solid rgba(168,85,247,0.35); }
+.cat-pref-equity-recap{ background: rgba(124,82,131,0.16); color: #7c5283; border: 1px solid rgba(124,82,131,0.35); }
 .cat-short-term-debt  { background: rgba(234,88,12,0.18);  color: #f97316; border: 1px solid rgba(234,88,12,0.35); }
 .cat-partner-pref-return { background: rgba(245,158,11,0.18); color: var(--warning); border: 1px solid rgba(245,158,11,0.35); }
 .cat-opco             { background: rgba(96,165,250,0.18); color: #60a5fa; border: 1px solid rgba(96,165,250,0.35); }
@@ -792,22 +799,13 @@ tr.sev-row-low      td { background: rgba(120,120,140,0.04); }
   </div>
 </div>
 
-<!-- ========== SHORT-TERM DEBT DETAIL ========== -->
-<div class="panel">
-  <div class="panel-title">Short-Term Debt Detail</div>
-  <div id="st-debt-ff" style="margin-bottom:20px;"></div>
-  <div id="st-debt-inst"></div>
-  <div id="st-debt-note" style="font-size:10px;color:var(--text-muted);margin-top:10px;"></div>
-</div>
-
-<!-- ========== PROPERTY-LEVEL NOI TABLE ========== -->
-<div class="panel">
-  <div class="panel-title">NOI Projections &mdash; Property Level (41 properties)</div>
-  <div id="prop-noi-table"></div>
-  <div style="font-size:10px;color:var(--text-muted);margin-top:10px;">
-    Click a column header to sort. NOI haircut slider applies to all year columns. Hover an AY mid value to see the low/high range.
-  </div>
-</div>
+<!--
+  Short-Term Debt Detail and Property-Level NOI panels were removed from the
+  on-page render 2026-04-09 to keep the recap dashboard a high-level Jadian
+  overview. Both data sets are still in the recap document and remain
+  exported via the "Short-Term Debt Detail CSV" and "NOI Projections (Property
+  Level) CSV" buttons in the toolbar above.
+-->
 
 <!-- ========== 36-MONTH CASH FLOW ========== -->
 <div class="panel">
@@ -1015,11 +1013,11 @@ function render() {
         </tr>
         <tr style="background:rgba(139,92,246,0.06);">
           <td>
-            <span style="color:#8b5cf6;">Construction synthetic debt @ ${ltvPct}% LTV</span>
+            <span style="color:#18505c;">Construction synthetic debt @ ${ltvPct}% LTV</span>
             <span style="color:var(--text-muted);font-size:10px;">— funds construction loan portion direct to vendors</span>
           </td>
-          <td style="text-align:right;color:#8b5cf6;font-weight:600;">${bigMoney(syntheticDebt)}</td>
-          <td style="text-align:right;font-size:11px;color:#8b5cf6;">Jadian (synthetic)</td>
+          <td style="text-align:right;color:#18505c;font-weight:600;">${bigMoney(syntheticDebt)}</td>
+          <td style="text-align:right;font-size:11px;color:#18505c;">Jadian (synthetic)</td>
         </tr>
         <tr class="total" style="border-top:2px solid var(--border-accent);">
           <td>Total Program Capital</td>
@@ -1109,8 +1107,9 @@ function render() {
   renderLtvTable(recap);
   renderHtcSchedule();
   renderOtherCashSources();
-  renderShortTermDebt();
-  renderPropertyNoiTable();
+  // renderShortTermDebt() and renderPropertyNoiTable() removed from on-page
+  // render 2026-04-09 (kept available for CSV export). The data is still on
+  // RECAP.short_term_debt_detail and RECAP.property_noi_detail.
   renderRiskFlags();
   renderSteveOpenItems();
 }
@@ -1133,18 +1132,18 @@ function renderCapStackCompare(recap) {
   const clayPre = pre.pref_clay
     || ((RECAP.tranche_2_uses_sot && RECAP.tranche_2_uses_sot.u002 && RECAP.tranche_2_uses_sot.u002.amount) || 0);
   const preLayers = [
-    { short: 'Senior',  value: CURRENT_DRAWN_SENIOR, color: '#dc2626' },
-    { short: 'Non-Sr',  value: pre.non_senior_debt, color: '#ea580c' },
-    { short: 'Clay',    value: clayPre, color: '#a855f7' },
-    { short: 'FP Pref', value: FOUNDATION_PARTNER_PREF, color: '#f59e0b' },
-    { short: 'Common',  value: Math.max(0, total - CURRENT_DRAWN_SENIOR - pre.non_senior_debt - PREF_TOTAL), color: '#10b981' },
+    { short: 'Senior',  value: CURRENT_DRAWN_SENIOR, color: '#9c3a3a' },
+    { short: 'Non-Sr',  value: pre.non_senior_debt, color: '#b87333' },
+    { short: 'Clay',    value: clayPre, color: '#7c5283' },
+    { short: 'FP Pref', value: FOUNDATION_PARTNER_PREF, color: '#d4a14a' },
+    { short: 'Common',  value: Math.max(0, total - CURRENT_DRAWN_SENIOR - pre.non_senior_debt - PREF_TOTAL), color: '#4a7a4a' },
   ];
 
   const postLayers = [
-    { short: 'Senior',       value: postSenior, color: '#dc2626' },
-    { short: 'New Pref Sr',  value: recap, color: '#8b5cf6' },
-    { short: 'FP Pref Jr',   value: FOUNDATION_PARTNER_PREF, color: '#f59e0b' },
-    { short: 'Common',       value: Math.max(0, total - postSenior - recap - FOUNDATION_PARTNER_PREF), color: '#10b981' },
+    { short: 'Senior',       value: postSenior, color: '#9c3a3a' },
+    { short: 'New Pref Sr',  value: recap, color: '#18505c' },
+    { short: 'FP Pref Jr',   value: FOUNDATION_PARTNER_PREF, color: '#d4a14a' },
+    { short: 'Common',       value: Math.max(0, total - postSenior - recap - FOUNDATION_PARTNER_PREF), color: '#4a7a4a' },
   ];
 
   const buildBar = (label, layers, totalForPct) => {
@@ -1245,7 +1244,7 @@ function renderNoiChart() {
     type: 'bar',
     x: ['AY 26-27', 'AY 27-28', 'AY 28-29', 'AY 29-30'],
     y: [adjustedNoi('ay2627'), adjustedNoi('ay2728_mid'), adjustedNoi('ay2829_mid'), adjustedNoi('ay2930_mid')],
-    marker: { color: ['#7a7a90', '#f59e0b', '#10b981', '#10b981'] },
+    marker: { color: ['#8a9a9f', '#b87333', '#4a7a4a', '#4a7a4a'] },
     text: [bigMoney(adjustedNoi('ay2627')), bigMoney(adjustedNoi('ay2728_mid')), bigMoney(adjustedNoi('ay2829_mid')), bigMoney(adjustedNoi('ay2930_mid'))],
     textposition: 'auto',
     textfont: { family: 'JetBrains Mono', size: 13, color: isLight ? '#0f172a' : '#fff' },
@@ -1263,7 +1262,7 @@ function renderNoiChart() {
       text: 'Construction completes → +98% NOI',
       x: 1.5, y: adjustedNoi('ay2728_mid') * 1.05,
       showarrow: false,
-      font: { family: 'DM Sans', size: 12, color: '#f59e0b' },
+      font: { family: 'DM Sans', size: 12, color: '#d4a14a' },
     }],
     height: 280,
   }, { displayModeBar: false, responsive: true });
@@ -1306,7 +1305,7 @@ function confidenceBadge(conf) {
     'MEDIUM':     { bg: 'rgba(251,191,36,0.15)',  fg: 'var(--warning)' },
     'LOW':        { bg: 'rgba(255,107,107,0.15)', fg: 'var(--accent-coral)' },
     'ESTIMATE':   { bg: 'rgba(255,107,107,0.10)', fg: 'var(--accent-coral)' },
-    'STRUCTURED': { bg: 'rgba(139,92,246,0.15)',  fg: '#8b5cf6' },
+    'STRUCTURED': { bg: 'rgba(24,80,92,0.12)',  fg: '#18505c' },
   };
   const c = colors[conf] || { bg: 'rgba(120,120,140,0.15)', fg: 'var(--text-muted)' };
   return `<span style="background:${c.bg};color:${c.fg};padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;letter-spacing:0.04em;">${conf}</span>`;
@@ -1500,27 +1499,27 @@ function renderCashflowChart(recap) {
     {
       type: 'bar', name: 'Tranche Capital',
       x: x, y: trancheIn,
-      marker: { color: '#8b5cf6' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+      marker: { color: '#18505c' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
     },
     {
       type: 'bar', name: 'HTC Receipts',
       x: x, y: htcIn,
-      marker: { color: '#34d399' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+      marker: { color: '#4a7a4a' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
     },
     {
       type: 'bar', name: 'Lease Revenue (NOI)',
       x: x, y: leaseIn,
-      marker: { color: '#60a5fa' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+      marker: { color: '#5fb0c0' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
     },
     {
       type: 'bar', name: 'Construction Draws',
       x: x, y: constrOut.map(v => -v),
-      marker: { color: '#f59e0b' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+      marker: { color: '#d4a14a' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
     },
     {
       type: 'bar', name: 'Debt Service',
       x: x, y: debtOut.map(v => -v),
-      marker: { color: '#ea580c' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+      marker: { color: '#b87333' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
     },
     {
       type: 'scatter', name: 'Cumulative Cash',
