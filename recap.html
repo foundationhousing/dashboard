@@ -8,54 +8,57 @@
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
 /* ============================================================================
-   FOUNDATION HOUSING BRAND PALETTE
-   Primary teal #18505c sourced from foundation logo (760×184 wordmark, 45,462px)
-   Audited and committed to brand 2026-04-09. The accent variable is named
-   --accent-coral for backwards compat with existing CSS class names; the
-   actual color is now Foundation teal.
+   FOUNDATION HOUSING BRAND PALETTE (committed 2026-04-09 v2)
+   ----------------------------------------------------------------------------
+   Primary coral #ff5252 sourced from "Foundation investor deck - FINAL v5.pptx"
+   (Foundation logo PNG image4 416×89, dominant color #f85050 with 6,590 pixels;
+   plus 55 inline #ff5252 instances across 26 deck slides). The Foundation
+   wordmark uses a coral-to-hot-pink gradient: #ff5252 → #fc226e.
    ============================================================================ */
 :root {
-  /* Dark theme (default variables) */
-  --bg-base: #0a1418;             /* deep teal-black */
-  --bg-surface-0: #0e1c21;
-  --bg-surface-1: #122428;
-  --bg-surface-2: #173036;
-  --bg-surface-3: #1f3d44;
-  --border: rgba(204,224,228,0.08);
-  --border-accent: rgba(204,224,228,0.16);
-  --text-primary: #e8eded;
-  --text-secondary: #8aa0a6;
-  --text-muted: #5a7077;
-  --accent-coral: #5fb0c0;          /* lighter teal for visibility on dark */
-  --accent-coral-dim: rgba(95,176,192,0.16);
-  --accent-purple: #c08a3e;         /* warm copper accent (institutional) */
+  /* Dark theme */
+  --bg-base: #0e0a0a;               /* near-black with warm undertone */
+  --bg-surface-0: #161010;
+  --bg-surface-1: #1d1414;
+  --bg-surface-2: #271818;
+  --bg-surface-3: #322020;
+  --border: rgba(255,200,200,0.06);
+  --border-accent: rgba(255,200,200,0.14);
+  --text-primary: #f5e8e6;
+  --text-secondary: #a99088;
+  --text-muted: #6f5853;
+  --accent-coral: #ff5252;          /* FOUNDATION BRAND PRIMARY */
+  --accent-coral-dim: rgba(255,82,82,0.16);
+  --accent-purple: #fc226e;         /* gradient end — hot pink */
+  --accent-warm: #ff7858;           /* sunset variant */
   --success: #6fb38a;
   --warning: #d4a14a;
-  --chart-grid: rgba(204,224,228,0.06);
-  --chart-text: #e8eded;
-  --scroll-thumb: #1f3d44;
-  --row-zebra: rgba(204,224,228,0.02);
+  --chart-grid: rgba(255,200,200,0.06);
+  --chart-text: #f5e8e6;
+  --scroll-thumb: #322020;
+  --row-zebra: rgba(255,255,255,0.02);
 }
 body.theme-light {
   --bg-base: #fafaf7;               /* warm off-white */
   --bg-surface-0: #ffffff;
   --bg-surface-1: #ffffff;
-  --bg-surface-2: #f3f1ec;          /* cream */
-  --bg-surface-3: #e8e3da;
-  --border: rgba(24,80,92,0.10);
-  --border-accent: rgba(24,80,92,0.20);
-  --text-primary: #0a1a1f;          /* near-black with teal undertone */
-  --text-secondary: #455b62;
-  --text-muted: #8a9a9f;
-  --accent-coral: #18505c;          /* FOUNDATION BRAND PRIMARY (logo teal) */
-  --accent-coral-dim: rgba(24,80,92,0.10);
-  --accent-purple: #c08a3e;         /* warm copper accent */
-  --success: #4a7a4a;               /* muted forest green */
-  --warning: #b8862e;               /* mustard */
-  --chart-grid: rgba(24,80,92,0.08);
-  --chart-text: #0a1a1f;
-  --scroll-thumb: #c8c0b2;
-  --row-zebra: rgba(24,80,92,0.025);
+  --bg-surface-2: #fdf6f5;          /* very pale coral wash */
+  --bg-surface-3: #f5e8e6;
+  --border: rgba(255,82,82,0.12);
+  --border-accent: rgba(255,82,82,0.22);
+  --text-primary: #1a0a08;          /* warm near-black */
+  --text-secondary: #5b4540;
+  --text-muted: #9a8580;
+  --accent-coral: #ff5252;          /* FOUNDATION BRAND PRIMARY (logo coral) */
+  --accent-coral-dim: rgba(255,82,82,0.10);
+  --accent-purple: #fc226e;         /* gradient end — hot pink (logo gradient) */
+  --accent-warm: #ff7858;           /* sunset variant */
+  --success: #4a8a5a;               /* warmer forest green */
+  --warning: #d4a14a;               /* mustard */
+  --chart-grid: rgba(255,82,82,0.10);
+  --chart-text: #1a0a08;
+  --scroll-thumb: #e8d8d4;
+  --row-zebra: rgba(255,82,82,0.025);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
@@ -100,7 +103,7 @@ body {
   white-space: nowrap;
 }
 .cat-bridge-refi      { background: rgba(139,92,246,0.18); color: var(--accent-purple); border: 1px solid rgba(139,92,246,0.35); }
-.cat-pref-equity-recap{ background: rgba(124,82,131,0.16); color: #7c5283; border: 1px solid rgba(124,82,131,0.35); }
+.cat-pref-equity-recap{ background: rgba(155,77,122,0.16); color: #9b4d7a; border: 1px solid rgba(155,77,122,0.35); }
 .cat-short-term-debt  { background: rgba(234,88,12,0.18);  color: #f97316; border: 1px solid rgba(234,88,12,0.35); }
 .cat-partner-pref-return { background: rgba(245,158,11,0.18); color: var(--warning); border: 1px solid rgba(245,158,11,0.35); }
 .cat-opco             { background: rgba(96,165,250,0.18); color: #60a5fa; border: 1px solid rgba(96,165,250,0.35); }
@@ -1013,11 +1016,11 @@ function render() {
         </tr>
         <tr style="background:rgba(139,92,246,0.06);">
           <td>
-            <span style="color:#18505c;">Construction synthetic debt @ ${ltvPct}% LTV</span>
+            <span style="color:#ff5252;">Construction synthetic debt @ ${ltvPct}% LTV</span>
             <span style="color:var(--text-muted);font-size:10px;">— funds construction loan portion direct to vendors</span>
           </td>
-          <td style="text-align:right;color:#18505c;font-weight:600;">${bigMoney(syntheticDebt)}</td>
-          <td style="text-align:right;font-size:11px;color:#18505c;">Jadian (synthetic)</td>
+          <td style="text-align:right;color:#ff5252;font-weight:600;">${bigMoney(syntheticDebt)}</td>
+          <td style="text-align:right;font-size:11px;color:#ff5252;">Jadian (synthetic)</td>
         </tr>
         <tr class="total" style="border-top:2px solid var(--border-accent);">
           <td>Total Program Capital</td>
@@ -1132,18 +1135,18 @@ function renderCapStackCompare(recap) {
   const clayPre = pre.pref_clay
     || ((RECAP.tranche_2_uses_sot && RECAP.tranche_2_uses_sot.u002 && RECAP.tranche_2_uses_sot.u002.amount) || 0);
   const preLayers = [
-    { short: 'Senior',  value: CURRENT_DRAWN_SENIOR, color: '#9c3a3a' },
-    { short: 'Non-Sr',  value: pre.non_senior_debt, color: '#b87333' },
-    { short: 'Clay',    value: clayPre, color: '#7c5283' },
+    { short: 'Senior',  value: CURRENT_DRAWN_SENIOR, color: '#c53030' },
+    { short: 'Non-Sr',  value: pre.non_senior_debt, color: '#e07a3c' },
+    { short: 'Clay',    value: clayPre, color: '#9b4d7a' },
     { short: 'FP Pref', value: FOUNDATION_PARTNER_PREF, color: '#d4a14a' },
-    { short: 'Common',  value: Math.max(0, total - CURRENT_DRAWN_SENIOR - pre.non_senior_debt - PREF_TOTAL), color: '#4a7a4a' },
+    { short: 'Common',  value: Math.max(0, total - CURRENT_DRAWN_SENIOR - pre.non_senior_debt - PREF_TOTAL), color: '#4a8a5a' },
   ];
 
   const postLayers = [
-    { short: 'Senior',       value: postSenior, color: '#9c3a3a' },
-    { short: 'New Pref Sr',  value: recap, color: '#18505c' },
+    { short: 'Senior',       value: postSenior, color: '#c53030' },
+    { short: 'New Pref Sr',  value: recap, color: '#ff5252' },
     { short: 'FP Pref Jr',   value: FOUNDATION_PARTNER_PREF, color: '#d4a14a' },
-    { short: 'Common',       value: Math.max(0, total - postSenior - recap - FOUNDATION_PARTNER_PREF), color: '#4a7a4a' },
+    { short: 'Common',       value: Math.max(0, total - postSenior - recap - FOUNDATION_PARTNER_PREF), color: '#4a8a5a' },
   ];
 
   const buildBar = (label, layers, totalForPct) => {
@@ -1244,7 +1247,7 @@ function renderNoiChart() {
     type: 'bar',
     x: ['AY 26-27', 'AY 27-28', 'AY 28-29', 'AY 29-30'],
     y: [adjustedNoi('ay2627'), adjustedNoi('ay2728_mid'), adjustedNoi('ay2829_mid'), adjustedNoi('ay2930_mid')],
-    marker: { color: ['#8a9a9f', '#b87333', '#4a7a4a', '#4a7a4a'] },
+    marker: { color: ['#9a8580', '#e07a3c', '#4a8a5a', '#4a8a5a'] },
     text: [bigMoney(adjustedNoi('ay2627')), bigMoney(adjustedNoi('ay2728_mid')), bigMoney(adjustedNoi('ay2829_mid')), bigMoney(adjustedNoi('ay2930_mid'))],
     textposition: 'auto',
     textfont: { family: 'JetBrains Mono', size: 13, color: isLight ? '#0f172a' : '#fff' },
@@ -1305,7 +1308,7 @@ function confidenceBadge(conf) {
     'MEDIUM':     { bg: 'rgba(251,191,36,0.15)',  fg: 'var(--warning)' },
     'LOW':        { bg: 'rgba(255,107,107,0.15)', fg: 'var(--accent-coral)' },
     'ESTIMATE':   { bg: 'rgba(255,107,107,0.10)', fg: 'var(--accent-coral)' },
-    'STRUCTURED': { bg: 'rgba(24,80,92,0.12)',  fg: '#18505c' },
+    'STRUCTURED': { bg: 'rgba(255,82,82,0.12)',  fg: '#ff5252' },
   };
   const c = colors[conf] || { bg: 'rgba(120,120,140,0.15)', fg: 'var(--text-muted)' };
   return `<span style="background:${c.bg};color:${c.fg};padding:2px 8px;border-radius:10px;font-size:9px;font-weight:700;letter-spacing:0.04em;">${conf}</span>`;
@@ -1499,17 +1502,17 @@ function renderCashflowChart(recap) {
     {
       type: 'bar', name: 'Tranche Capital',
       x: x, y: trancheIn,
-      marker: { color: '#18505c' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+      marker: { color: '#ff5252' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
     },
     {
       type: 'bar', name: 'HTC Receipts',
       x: x, y: htcIn,
-      marker: { color: '#4a7a4a' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+      marker: { color: '#4a8a5a' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
     },
     {
       type: 'bar', name: 'Lease Revenue (NOI)',
       x: x, y: leaseIn,
-      marker: { color: '#5fb0c0' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+      marker: { color: '#ff7858' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
     },
     {
       type: 'bar', name: 'Construction Draws',
@@ -1519,7 +1522,7 @@ function renderCashflowChart(recap) {
     {
       type: 'bar', name: 'Debt Service',
       x: x, y: debtOut.map(v => -v),
-      marker: { color: '#b87333' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
+      marker: { color: '#e07a3c' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
     },
     {
       type: 'scatter', name: 'Cumulative Cash',
