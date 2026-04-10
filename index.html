@@ -17,58 +17,61 @@
 
 <style>
 /* ============================================================================
-   FOUNDATION HOUSING BRAND PALETTE
-   Primary teal #18505c sourced from foundation logo (760×184 wordmark, 45,462px)
-   Audited and committed to brand 2026-04-09. The accent variable is named
-   --accent-coral for backwards compat with existing CSS class names; the
-   actual color is now Foundation teal.
+   FOUNDATION HOUSING BRAND PALETTE (committed 2026-04-09 v2)
+   ----------------------------------------------------------------------------
+   Primary coral #ff5252 sourced from "Foundation investor deck - FINAL v5.pptx"
+   (Foundation logo PNG, 6,590 pixels of #f85050; plus 55 inline #ff5252
+   instances across 26 deck slides). The wordmark uses a coral-to-hot-pink
+   gradient: #ff5252 → #fc226e.
    ============================================================================ */
 :root {
   /* Dark theme */
-  --bg-base: #0a1418;
-  --bg-surface-0: #0e1c21;
-  --bg-surface-1: #122428;
-  --bg-surface-2: #173036;
-  --bg-surface-3: #1f3d44;
-  --border: rgba(204,224,228,0.08);
-  --border-accent: rgba(204,224,228,0.16);
-  --text-primary: #e8eded;
-  --text-secondary: #8aa0a6;
-  --text-muted: #5a7077;
-  --accent-coral: #5fb0c0;
-  --accent-coral-dim: rgba(95,176,192,0.16);
-  --accent-gradient: linear-gradient(135deg, #18505c, #0e3640);
+  --bg-base: #0e0a0a;
+  --bg-surface-0: #161010;
+  --bg-surface-1: #1d1414;
+  --bg-surface-2: #271818;
+  --bg-surface-3: #322020;
+  --border: rgba(255,200,200,0.06);
+  --border-accent: rgba(255,200,200,0.14);
+  --text-primary: #f5e8e6;
+  --text-secondary: #a99088;
+  --text-muted: #6f5853;
+  --accent-coral: #ff5252;          /* FOUNDATION BRAND PRIMARY */
+  --accent-coral-dim: rgba(255,82,82,0.16);
+  --accent-gradient: linear-gradient(135deg, #ff5252, #fc226e);
+  --accent-warm: #ff7858;
   --success: #6fb38a;
   --success-dim: rgba(111,179,138,0.16);
   --warning: #d4a14a;
-  --danger: #c5635f;
+  --danger: #c53030;
   --sidebar-collapsed: 56px;
   --sidebar-expanded: 200px;
   --topbar-h: 52px;
-  --chart-grid: rgba(204,224,228,0.06);
-  --chart-text: #e8eded;
+  --chart-grid: rgba(255,200,200,0.06);
+  --chart-text: #f5e8e6;
 }
 /* Light theme — Foundation brand. Default per Steve preference. */
 body.theme-light {
   --bg-base: #fafaf7;
   --bg-surface-0: #ffffff;
   --bg-surface-1: #ffffff;
-  --bg-surface-2: #f3f1ec;
-  --bg-surface-3: #e8e3da;
-  --border: rgba(24,80,92,0.10);
-  --border-accent: rgba(24,80,92,0.20);
-  --text-primary: #0a1a1f;
-  --text-secondary: #455b62;
-  --text-muted: #8a9a9f;
-  --accent-coral: #18505c;          /* FOUNDATION BRAND PRIMARY */
-  --accent-coral-dim: rgba(24,80,92,0.10);
-  --accent-gradient: linear-gradient(135deg, #18505c, #0e3640);
-  --success: #4a7a4a;
-  --success-dim: rgba(74,122,74,0.12);
-  --warning: #b8862e;
-  --danger: #9c3a3a;
-  --chart-grid: rgba(24,80,92,0.08);
-  --chart-text: #0a1a1f;
+  --bg-surface-2: #fdf6f5;          /* very pale coral wash */
+  --bg-surface-3: #f5e8e6;
+  --border: rgba(255,82,82,0.12);
+  --border-accent: rgba(255,82,82,0.22);
+  --text-primary: #1a0a08;
+  --text-secondary: #5b4540;
+  --text-muted: #9a8580;
+  --accent-coral: #ff5252;          /* FOUNDATION BRAND PRIMARY (logo coral) */
+  --accent-coral-dim: rgba(255,82,82,0.10);
+  --accent-gradient: linear-gradient(135deg, #ff5252, #fc226e);
+  --accent-warm: #ff7858;
+  --success: #4a8a5a;
+  --success-dim: rgba(74,138,90,0.12);
+  --warning: #d4a14a;
+  --danger: #c53030;
+  --chart-grid: rgba(255,82,82,0.10);
+  --chart-text: #1a0a08;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1142,7 +1145,7 @@ const PLOTLY_LAYOUT = {
   xaxis: { gridcolor: themeColors().grid, zerolinecolor: themeColors().grid },
   yaxis: { gridcolor: themeColors().grid, zerolinecolor: themeColors().grid },
   legend: { orientation: 'h', y: -0.15, font: { size: 11 } },
-  colorway: ['#18505c', '#4a7a4a', '#fbbf24', '#818cf8', '#fb923c', '#38bdf8'],
+  colorway: ['#ff5252', '#4a8a5a', '#fbbf24', '#818cf8', '#fb923c', '#38bdf8'],
 };
 const PLOTLY_CONFIG = { displayModeBar: false, responsive: true };
 
@@ -1524,11 +1527,11 @@ function renderOverview() {
 
     // Layers in waterfall order (bottom of cap stack to top)
     const layers = [
-      { name: 'Senior Debt',  short: 'Senior',   value: seniorD,    color: '#9c3a3a', desc: 'CNB + Visions FCU mortgages' },
-      { name: 'Non-Senior',   short: 'Non-Sr',   value: nonSeniorD, color: '#b87333', desc: 'F&F loans + BTC' },
+      { name: 'Senior Debt',  short: 'Senior',   value: seniorD,    color: '#c53030', desc: 'CNB + Visions FCU mortgages' },
+      { name: 'Non-Senior',   short: 'Non-Sr',   value: nonSeniorD, color: '#e07a3c', desc: 'F&F loans + BTC' },
       { name: 'Pref Equity',  short: 'Pref Eq',  value: prefEq,     color: '#d4a14a', desc: 'Ryan, Clay, Vassallos' },
       { name: '25% Haircut',  short: 'Haircut',  value: haircut,    color: '#525266', desc: 'Conservative reserve' },
-      { name: 'Common Equity',short: 'Common Eq',value: ceAdj,      color: '#4a7a4a', desc: 'Foundation Assets equity' },
+      { name: 'Common Equity',short: 'Common Eq',value: ceAdj,      color: '#4a8a5a', desc: 'Foundation Assets equity' },
     ];
 
     const totalForPct = reVal;
@@ -1636,8 +1639,8 @@ function renderOverview() {
     const bookCeAdj = cm.common_equity_book_adjusted || 0;
     const incomeCeGross = cm.common_equity_gross || 0;
     const incomeCeAdj = cm.common_equity_adjusted || 0;
-    const bookCeColor = bookCeAdj < 0 ? '#18505c' : '#4a7a4a';
-    const incomeCeColor = incomeCeAdj < 0 ? '#18505c' : '#4a7a4a';
+    const bookCeColor = bookCeAdj < 0 ? '#ff5252' : '#4a8a5a';
+    const incomeCeColor = incomeCeAdj < 0 ? '#ff5252' : '#4a8a5a';
     const vtRows = [
       ['Metric', 'Book Value', 'Income Approach'],
       ['RE Value', fmtCurrency(bookReValue), fmtCurrency(cm.re_income_value)],
@@ -1813,7 +1816,7 @@ function renderLeasingCharts() {
   if (paceData.length) {
     const campuses = STATE.campuses.length ? STATE.campuses : [...new Set(paceData.map(r => r.campus))];
     const traces = [];
-    const campusColors = { 'Syracuse': '#18505c', 'Cornell': '#4a7a4a', 'RPI': '#818cf8', 'Binghamton': '#fbbf24', 'ALL': '#e8e8ed' };
+    const campusColors = { 'Syracuse': '#ff5252', 'Cornell': '#4a8a5a', 'RPI': '#818cf8', 'Binghamton': '#fbbf24', 'ALL': '#e8e8ed' };
     campuses.forEach(campus => {
       const cd = paceData.filter(r => r.campus === campus).sort((a,b) => a.as_of_date.localeCompare(b.as_of_date));
       if (!cd.length) return;
@@ -1872,7 +1875,7 @@ function renderLeasingCharts() {
     Plotly.newPlot('chart-signed-beds', [{
       type: 'bar', orientation: 'h',
       y: campuses, x: signed,
-      marker: { color: '#18505c' },
+      marker: { color: '#ff5252' },
       text: signed.map(v => fmtNum(v)),
       textposition: 'outside',
       textfont: { family: 'JetBrains Mono', size: 11, color: themeColors().text },
@@ -1907,7 +1910,7 @@ function renderLeasingCharts() {
       y: campuses, x: fills.map(v => v != null ? v * 100 : 0),
       marker: { color: fills.map(v => {
         const pct = (v||0)*100;
-        return pct >= 80 ? '#4a7a4a' : pct >= 50 ? '#fbbf24' : '#18505c';
+        return pct >= 80 ? '#4a8a5a' : pct >= 50 ? '#fbbf24' : '#ff5252';
       }) },
       text: fills.map(v => v != null ? (v*100).toFixed(1)+'%' : '\u2014'),
       textposition: 'outside',
@@ -1941,7 +1944,7 @@ function renderLeasingCharts() {
       y: campuses, x: atts.map(v => v != null ? v * 100 : 0),
       marker: { color: atts.map(v => {
         const pct = (v||0)*100;
-        return pct >= 90 ? '#4a7a4a' : pct >= 70 ? '#fbbf24' : '#18505c';
+        return pct >= 90 ? '#4a8a5a' : pct >= 70 ? '#fbbf24' : '#ff5252';
       }) },
       text: atts.map(v => v != null ? (v*100).toFixed(1)+'%' : '\u2014'),
       textposition: 'outside',
@@ -2038,8 +2041,8 @@ function buildPropertyTable() {
       { title: 'Status', field: 'online_status', headerFilter: true, width: 80, hozAlign: 'center',
         formatter: function(cell) {
           const v = cell.getValue();
-          if (v === 'online') return '<span style="color:#4a7a4a;">\u25CF</span> On';
-          if (v === 'offline') return '<span style="color:#18505c;">\u25CF</span> Off';
+          if (v === 'online') return '<span style="color:#4a8a5a;">\u25CF</span> On';
+          if (v === 'offline') return '<span style="color:#ff5252;">\u25CF</span> Off';
           if (v === 'managed') return '<span style="color:#fbbf24;">\u25CF</span> Mgd';
           return v || '\u2014';
         }
@@ -2251,7 +2254,7 @@ function renderCapital() {
       type: 'bar', orientation: 'h',
       y: sorted.map(r => r.campus || 'Unknown'),
       x: sorted.map(r => r.balance),
-      marker: { color: '#18505c' },
+      marker: { color: '#ff5252' },
       text: sorted.map(r => bigMoney(r.balance)),
       textposition: 'outside',
       textfont: { family: 'JetBrains Mono', size: 11, color: themeColors().text },
@@ -2270,7 +2273,7 @@ function renderCapital() {
       type: 'bar', orientation: 'h',
       y: nsData.map(r => r.investor || 'Unknown'),
       x: nsData.map(r => r.total_balance),
-      marker: { color: '#4a7a4a' },
+      marker: { color: '#4a8a5a' },
       text: nsData.map(r => bigMoney(r.total_balance)),
       textposition: 'outside',
       textfont: { family: 'JetBrains Mono', size: 11, color: themeColors().text },
@@ -2354,10 +2357,10 @@ function renderProjections() {
   const opex = ps.map(r => r.opex || 0);
 
   Plotly.newPlot('chart-noi-trajectory', [
-    { type: 'bar', name: 'NOI (mid)', x: years, y: noiMid, marker: { color: '#4a7a4a' },
+    { type: 'bar', name: 'NOI (mid)', x: years, y: noiMid, marker: { color: '#4a8a5a' },
        text: noiMid.map(v => bigMoney(v)), textposition: 'outside',
        textfont: { family: 'JetBrains Mono', size: 11, color: themeColors().text } },
-    { type: 'bar', name: 'OpEx', x: years, y: opex, marker: { color: '#18505c66' } },
+    { type: 'bar', name: 'OpEx', x: years, y: opex, marker: { color: '#ff525266' } },
     { type: 'scatter', name: 'EGI', x: years, y: egi, mode: 'lines+markers',
        line: { color: '#7a7a90', dash: 'dot', width: 1.5 }, marker: { size: 5 } },
     { type: 'scatter', name: 'NOI Range', x: years.concat(years.slice().reverse()),
@@ -2378,7 +2381,7 @@ function renderProjections() {
     const values = opexData.map(r => r.amount);
     Plotly.newPlot('chart-opex-breakdown', [{
       type: 'pie', labels: labels, values: values, hole: 0.55,
-      marker: { colors: ['#18505c', '#4a7a4a', '#fbbf24', '#818cf8', '#f472b6', '#22d3ee',
+      marker: { colors: ['#ff5252', '#4a8a5a', '#fbbf24', '#818cf8', '#f472b6', '#22d3ee',
                           '#a78bfa', '#fb923c', '#4ade80', '#e879f9', '#38bdf8', '#f87171'] },
       textinfo: 'label+percent', textposition: 'outside',
       textfont: { family: 'DM Sans', size: 10, color: themeColors().text },
@@ -2390,7 +2393,7 @@ function renderProjections() {
   const cs = projections.campus_summary || [];
   const campuses = ['Syracuse', 'Cornell', 'RPI', 'Binghamton'];
   const yrLabels = ['2026-27', '2027-28', '2028-29', '2029-30'];
-  const campusColors = { 'Syracuse': '#18505c', 'Cornell': '#4a7a4a', 'RPI': '#818cf8', 'Binghamton': '#fbbf24' };
+  const campusColors = { 'Syracuse': '#ff5252', 'Cornell': '#4a8a5a', 'RPI': '#818cf8', 'Binghamton': '#fbbf24' };
   const campusTraces = campuses.map(c => ({
     type: 'bar', name: c,
     x: yrLabels.map(y => 'AY ' + y),
@@ -2566,7 +2569,7 @@ function renderFinance() {
       type: 'bar',
       x: coaData.map(r => r.status || 'Unknown'),
       y: coaData.map(r => r.count),
-      marker: { color: '#18505c' },
+      marker: { color: '#ff5252' },
       text: coaData.map(r => String(r.count)),
       textposition: 'outside',
       textfont: { family: 'JetBrains Mono', size: 12, color: themeColors().text },
@@ -2807,24 +2810,24 @@ function renderJadian() {
   };
 
   const preLayers = [
-    { name: 'Senior Debt',    short: 'Senior',  value: pre.senior_debt || 0,     color: '#9c3a3a' },
-    { name: 'Non-Senior',     short: 'Non-Sr',  value: pre.non_senior_debt || 0, color: '#b87333' },
+    { name: 'Senior Debt',    short: 'Senior',  value: pre.senior_debt || 0,     color: '#c53030' },
+    { name: 'Non-Senior',     short: 'Non-Sr',  value: pre.non_senior_debt || 0, color: '#e07a3c' },
     { name: 'Pref Equity',    short: 'Pref',    value: pre.pref_equity || 0,     color: '#d4a14a' },
-    { name: 'Common Equity',  short: 'Common',  value: Math.max(0, pre.common_equity_gross || 0), color: '#4a7a4a' },
+    { name: 'Common Equity',  short: 'Common',  value: Math.max(0, pre.common_equity_gross || 0), color: '#4a8a5a' },
   ];
 
   const postALayers = [
-    { name: 'Senior Debt',    short: 'Senior',      value: postA.senior_debt || 0, color: '#9c3a3a' },
+    { name: 'Senior Debt',    short: 'Senior',      value: postA.senior_debt || 0, color: '#c53030' },
     { name: 'Legacy Pref',    short: 'Legacy Pref', value: postA.legacy_pref || 0, color: '#d4a14a' },
-    { name: 'Jadian Pref',    short: 'Jadian',      value: postA.jadian_pref || 0, color: '#18505c' },
-    { name: 'Common Equity',  short: 'Common',      value: Math.max(0, postA.common_equity || 0), color: '#4a7a4a' },
+    { name: 'Jadian Pref',    short: 'Jadian',      value: postA.jadian_pref || 0, color: '#ff5252' },
+    { name: 'Common Equity',  short: 'Common',      value: Math.max(0, postA.common_equity || 0), color: '#4a8a5a' },
   ];
 
   const postCLayers = [
-    { name: 'Senior Debt',     short: 'Senior',     value: postC.senior_debt || 0,        color: '#9c3a3a' },
-    { name: 'Jadian Pref (Sr)',short: 'Jadian Sr',  value: postC.jadian_pref_senior || 0, color: '#18505c' },
+    { name: 'Senior Debt',     short: 'Senior',     value: postC.senior_debt || 0,        color: '#c53030' },
+    { name: 'Jadian Pref (Sr)',short: 'Jadian Sr',  value: postC.jadian_pref_senior || 0, color: '#ff5252' },
     { name: 'Legacy Pref (Jr)',short: 'Legacy Jr',  value: postC.legacy_pref_junior || 0, color: '#d4a14a' },
-    { name: 'Common Equity',   short: 'Common',     value: Math.max(0, postC.common_equity || 0), color: '#4a7a4a' },
+    { name: 'Common Equity',   short: 'Common',     value: Math.max(0, postC.common_equity || 0), color: '#4a8a5a' },
   ];
 
   const preTotal = pre.re_value_income || preLayers.reduce((a, l) => a + l.value, 0);
@@ -2913,7 +2916,7 @@ function renderJadian() {
       type: 'bar',
       x: ['AY 26-27', 'AY 27-28', 'AY 28-29', 'AY 29-30'],
       y: [noi.ay2627, noi.ay2728_mid, noi.ay2829_mid, noi.ay2930_mid],
-      marker: { color: ['#7a7a90', '#d4a14a', '#4a7a4a', '#4a7a4a'] },
+      marker: { color: ['#7a7a90', '#d4a14a', '#4a8a5a', '#4a8a5a'] },
       text: [bigMoney(noi.ay2627), bigMoney(noi.ay2728_mid), bigMoney(noi.ay2829_mid), bigMoney(noi.ay2930_mid)],
       textposition: 'auto',
       textfont: { family: 'JetBrains Mono', size: 11, color: '#fff' },
