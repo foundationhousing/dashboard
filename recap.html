@@ -800,12 +800,15 @@ tr.sev-row-low      td { background: rgba(120,120,140,0.04); }
   Level) CSV" buttons in the toolbar above.
 -->
 
-<!-- ========== 36-MONTH CASH FLOW ========== -->
+<!-- ========== 36-MONTH CASH FLOW (rebuilt 2026-04-10 per Chucky/Maude/Rusty) ========== -->
 <div class="panel">
   <div class="panel-title">36-Month Cash Flow Projection (May 2026 &rarr; Apr 2029)</div>
-  <div id="cashflow-chart" style="height:360px;"></div>
+  <div style="font-size:11px;color:var(--text-secondary);margin:-4px 0 8px 0;line-height:1.5;">
+    All 11 SOT recap uses are deducted at T2 close. Construction shown net of synthetic loan funding (Jadian funds vendors direct &mdash; only the equity sleeve hits Foundation cash). Debt service ramps with construction draws. NOI bucketed by academic year. Cumulative cash <strong style="color:var(--accent-coral);">honestly shows the construction trough</strong>; the $2M working capital LOC (standby) and $631K Visions junior LOC sit ready to fill it.
+  </div>
+  <div id="cashflow-chart" style="height:520px;"></div>
   <div style="font-size:10px;color:var(--text-muted);margin-top:10px;">
-    Stacked inflows (tranche capital, HTC receipts, lease revenue) and outflows (construction draws, debt service, opex) with cumulative cash position overlay.
+    Top: cumulative Foundation cash position (single y-axis, honest zero line). Bottom: monthly net flow (inflows positive, outflows negative). Tranche 2 close at month 1 ($14.5M in / $14.5M out by construction) is rendered as an annotated marker, not a bar, so the recurring monthly bars are legible.
   </div>
 </div>
 
@@ -1510,154 +1513,334 @@ function renderUsesGranular(recap) {
 }
 
 function renderCashflowChart(recap) {
-  // 36 months: May 2026 -> Apr 2029
+  // ============================================================================
+  // REBUILT 2026-04-10 per Chucky / Maude / Rusty triple agent review.
+  // Replaces the v1 chart which had three independent structural bugs:
+  //   1. T2 double-count: showed $14.5M positive at month 1 with no offsetting
+  //      uses (the 11 SOT use lines were absent). Overstated cumulative cash
+  //      by ~$13.4M for the entire 36-month window.
+  //   2. Construction debt double-count: showed gross $9.52M construction
+  //      program as outflow with no offsetting construction loan inflow. The
+  //      construction loan is funded direct to vendors by Jadian and never
+  //      touches Foundation cash; only the equity sleeve hits Foundation.
+  //   3. NOI fall-through bug at the AY mapping: May/Jun/Jul 2026 fell through
+  //      to ay2930_mid ($321K/mo) instead of ay2627 ($171K/mo).
+  // Plus the dual-axis was lying about the cumulative line position relative
+  // to the bars (Maude: "credibility risk, not a polish nit").
+  //
+  // The rebuild:
+  //   - Two stacked subplots (Plotly) with shared x-axis (no dual axis)
+  //   - All 11 SOT use lines deducted at correct timing
+  //   - Construction shown net (only the equity sleeve = U010, no debt)
+  //   - Debt service ramps as construction draws happen
+  //   - HTC + Visions junior LOC inflows on actual schedule
+  //   - WC LOC NOT pre-drawn — honest trough is shown (Ryan directive 2026-04-10)
+  //   - T2 spike rendered as annotated marker, not a bar
+  //   - Brand color discipline (Maude: no semantic-token collisions)
+  // ============================================================================
+
+  // ── Build month index: 36 months from May 2026 to Apr 2029 ──
   const months = [];
   const startYear = 2026;
-  const startMonth = 5; // May
+  const startMonth = 5;
   for (let i = 0; i < 36; i++) {
     const m = ((startMonth - 1 + i) % 12) + 1;
     const y = startYear + Math.floor((startMonth - 1 + i) / 12);
     months.push({ y: y, m: m, label: y + '-' + String(m).padStart(2, '0') });
   }
+  const monthIdx = (y, m) => months.findIndex(mm => mm.y === y && mm.m === m);
 
-  // NOI anchors (annualized)
+  // ── NOI by academic year (FIX for May/Jun/Jul 2026 fall-through bug) ──
   const noi2627 = adjustedNoi('ay2627');
   const noi2728 = adjustedNoi('ay2728_mid');
   const noi2829 = adjustedNoi('ay2829_mid');
   const noi2930 = adjustedNoi('ay2930_mid');
-
-  // Pick academic year for a given calendar month
   function noiForMonth(y, m) {
-    // AY runs Aug -> Jul roughly
-    let ay;
-    if ((y === 2026 && m >= 8) || (y === 2027 && m <= 7)) ay = noi2627;
-    else if ((y === 2027 && m >= 8) || (y === 2028 && m <= 7)) ay = noi2728;
-    else if ((y === 2028 && m >= 8) || (y === 2029 && m <= 7)) ay = noi2829;
-    else ay = noi2930;
-    return ay / 12;
+    // AY runs Aug -> Jul. Window starts May 2026, so May/Jun/Jul 2026 are in
+    // AY 2025-26 (close to AY 2026-27 in our forward view); we use ay2627 as the
+    // floor for the entire pre-AY-2627-start window. Bug was: prior version
+    // had no clause for May/Jun/Jul 2026 and they fell through to ay2930.
+    if (y === 2026 && m >= 5 && m <= 7) return noi2627 / 12;          // FIX
+    if ((y === 2026 && m >= 8) || (y === 2027 && m <= 7)) return noi2627 / 12;
+    if ((y === 2027 && m >= 8) || (y === 2028 && m <= 7)) return noi2728 / 12;
+    if ((y === 2028 && m >= 8) || (y === 2029 && m <= 7)) return noi2829 / 12;
+    return noi2930 / 12;
   }
 
-  // Series
-  const trancheIn = new Array(36).fill(0);
-  const htcIn = new Array(36).fill(0);
-  const leaseIn = new Array(36).fill(0);
-  const constrOut = new Array(36).fill(0);
-  const debtOut = new Array(36).fill(0);
-  const opexOut = new Array(36).fill(0);
-
-  // Tranche 2 inflow at month 1 (May 2026)
-  trancheIn[0] = recap;
-
-  // HTC receipts: Sherwin Williams future + company retained future, per the json
-  // Split across summer 2026 (50%), summer 2027 (30%), summer 2028 (15%), summer 2029 (5%)
-  const totalHtcFuture =
-    (RECAP.other_cash_sources && RECAP.other_cash_sources.sherwin_williams_htc_future || 2442587) +
-    (RECAP.other_cash_sources && RECAP.other_cash_sources.company_retained_htcs_future || 810815);
-  const htcSchedule = [
-    { y: 2026, m: 7, pct: 0.50 },  // July 2026
-    { y: 2027, m: 7, pct: 0.30 },
-    { y: 2028, m: 7, pct: 0.15 },
-    { y: 2029, m: 3, pct: 0.05 },
-  ];
-  htcSchedule.forEach(s => {
-    const idx = months.findIndex(mm => mm.y === s.y && mm.m === s.m);
-    if (idx >= 0) htcIn[idx] += totalHtcFuture * s.pct;
-  });
-
-  // Lease revenue = NOI / 12 annualized per month
-  // Operating opex = ~40% of gross rev; we keep NOI line (post-opex) cleaner, so use half split
-  // Simplification: leaseIn is NOI, opexOut is 0 to avoid double counting.
-  for (let i = 0; i < 36; i++) {
-    leaseIn[i] = noiForMonth(months[i].y, months[i].m);
-    opexOut[i] = 0;
-  }
-
-  // Construction draws: SOT capex program (sot_construction_plan_v2.0.csv).
-  // Must come from RECAP.construction_plan_total — no fallback so missing data
-  // surfaces immediately rather than rendering stale numbers.
-  const totalConstr = RECAP.construction_plan_total;
+  // ── SOT use lines (Chucky audit: all 11 must be represented) ──
+  const sotUses = RECAP.tranche_2_uses_sot || {};
+  const u = (k) => (sotUses[k] && sotUses[k].amount) || 0;
+  const totalConstr = RECAP.construction_plan_total || 0;
   if (!totalConstr) {
     console.error('renderCashflowChart: RECAP.construction_plan_total missing');
     return;
   }
-  for (let i = 0; i < 18; i++) {
-    constrOut[i] = totalConstr / 18;
+  // U010 reno equity sleeve at the LIVE LTV slider
+  const u010Live = totalConstr * (1 - STATE.ltv);
+
+  // U006 floating residual (FP pref paydown), computed at runtime
+  const fpPrefBalance = FOUNDATION_PARTNER_PREF;
+  const fixedRecapUses = u('u001') + u('u002') + u('u003') + u('u005')
+                       + u('u007') + u('u008') + u('u009') + u010Live
+                       + u('u011') + u('u012');
+  const u006Float = Math.max(0, Math.min(recap - fixedRecapUses, fpPrefBalance));
+
+  // ── INFLOW SERIES ──
+  const t2In       = new Array(36).fill(0);  // T2 close
+  const noiIn      = new Array(36).fill(0);  // Operating NOI (post-OpEx, post-CapEx)
+  const htcIn      = new Array(36).fill(0);  // HTC receipts on schedule
+  const visionsIn  = new Array(36).fill(0);  // Visions junior LOC draws against HTC receivables
+
+  // ── OUTFLOW SERIES (positive numbers; flipped to negative for plotting) ──
+  const immediateUsesOut    = new Array(36).fill(0);  // Lump at month 1: U001/U002/U003/U005/U006/U008
+  const opcoCarveOut        = new Array(36).fill(0);  // U007 first $600K spread May-Jul 2026
+  const turnoverReserveOut  = new Array(36).fill(0);  // U007 second $300K spread Aug 2026 - Jul 2027
+  const henryWorkOut        = new Array(36).fill(0);  // U009 spread over construction window
+  const constructionEqOut   = new Array(36).fill(0);  // U010 equity sleeve, NET of construction loan funding
+  const constructionCarryOut= new Array(36).fill(0);  // U011 monthly during construction
+  const ffeOut              = new Array(36).fill(0);  // U012 at property delivery (Aug 2026)
+  const debtServiceOut      = new Array(36).fill(0);  // Senior debt service, ramps with construction loan draws
+
+  // === MONTH 1 (May 2026): T2 CLOSE ===
+  // Inflow
+  t2In[0] = recap;
+  // Outflow: all immediate recap uses (U001 + U002 + U003 + U005 + U006 floating + U008)
+  immediateUsesOut[0] = u('u001') + u('u002') + u('u003') + u('u005') + u006Float + u('u008');
+
+  // === U007: OpCo runway $600K spread May-Jul 2026 (3 months); turnover $300K spread Aug 2026-Jul 2027 ===
+  const opcoMonthly = 600000 / 3;
+  for (let i = 0; i < 3; i++) opcoCarveOut[i] = opcoMonthly;
+  const turnoverMonthly = 300000 / 12;
+  for (let i = 3; i < 15; i++) turnoverReserveOut[i] = turnoverMonthly;
+
+  // === U009 (23 Henry remaining work) spread over construction window (months 1-18) ===
+  const henryMonthly = u('u009') / 18;
+  for (let i = 0; i < 18; i++) henryWorkOut[i] = henryMonthly;
+
+  // === U010 (reno construction equity, NET — only the equity sleeve hits Foundation cash) ===
+  // The DEBT portion of construction draws is funded direct to vendors by Jadian
+  // and never touches Foundation cash. Foundation only pays the equity sleeve.
+  const u010Monthly = u010Live / 18;
+  for (let i = 0; i < 18; i++) constructionEqOut[i] = u010Monthly;
+
+  // === U011 (construction carry, interest during build) spread over construction ===
+  const carryMonthly = u('u011') / 18;
+  for (let i = 0; i < 18; i++) constructionCarryOut[i] = carryMonthly;
+
+  // === U012 (FF&E for new properties, $300K at delivery Aug 2026 = month 4) ===
+  const ffeIdx = monthIdx(2026, 8);
+  if (ffeIdx >= 0) ffeOut[ffeIdx] = u('u012');
+
+  // === Operating NOI ===
+  for (let i = 0; i < 36; i++) {
+    noiIn[i] = noiForMonth(months[i].y, months[i].m);
   }
 
-  // Debt service: senior interest-only ~6.5% on effective senior debt, monthly
-  const senior = effectiveSeniorDebt();
-  const monthlyDS = senior * 0.065 / 12;
-  for (let i = 0; i < 36; i++) debtOut[i] = monthlyDS;
+  // === HTC schedule (approximation tied to recap doc totals) ===
+  // Actual HTC sheet timing: 23 Henry $908K early 2026 (placed at month 1 here),
+  // distributions in Summer 2026/2027/2028/2029 for both 108 Eddy and 23 Henry,
+  // company retained NYS credits Summer 2026/2027/2028, federal spread over 5 yrs.
+  // This is a simplification - exact per-tax-year breakdown will follow Steve's HTC attachment.
+  const ocs = RECAP.other_cash_sources || {};
+  const htcSwFuture = ocs.sherwin_williams_htc_future || 0;  // 108 Eddy + 23 Henry future investor
+  const htcCompanyFuture = ocs.company_retained_htcs_future || 0;  // 4 (or 6 with Sumner) NYS+federal
+  const htcSchedule = [
+    { y: 2026, m: 7, swPct: 0.45, crPct: 0.30 },  // Summer 2026: 23 Henry imminent + 108 Eddy dist + NYS credits
+    { y: 2027, m: 7, swPct: 0.30, crPct: 0.30 },  // Summer 2027
+    { y: 2028, m: 7, swPct: 0.20, crPct: 0.30 },  // Summer 2028
+    { y: 2029, m: 3, swPct: 0.05, crPct: 0.10 },  // Spring 2029 final
+  ];
+  htcSchedule.forEach(s => {
+    const idx = monthIdx(s.y, s.m);
+    if (idx >= 0) {
+      htcIn[idx] += htcSwFuture * s.swPct + htcCompanyFuture * s.crPct;
+    }
+  });
 
-  // Cumulative cash
+  // === Visions 23 Henry junior LOC: $631K undrawn capacity drawn over construction window ===
+  // Visions is a junior LOC against the 23 Henry HTC receivables. Foundation draws it as
+  // construction work progresses on 23 Henry. Spread evenly over Jun-Dec 2026 (months 2-8).
+  const visionsLoc = RECAP.visions_23_henry_junior_loc || {};
+  const visionsUndrawn = visionsLoc.undrawn_balance || 0;
+  const visionsMonthly = visionsUndrawn / 7;
+  for (let i = 1; i <= 7; i++) visionsIn[i] = visionsMonthly;
+
+  // === Senior debt service — ramps as construction loan is drawn ===
+  // Pre-construction senior debt = current drawn (Feb 2026 Jadian DD) = $23.79M
+  // Plus the construction loan portion ramps over months 1-18 as draws happen.
+  const seniorPre = CURRENT_DRAWN_SENIOR;  // $23.79M from senior_debt_detail
+  const constrLoanTotal = totalConstr * STATE.ltv;  // construction debt portion
+  const constrLoanMonthlyDraw = constrLoanTotal / 18;
+  let constrLoanCumulative = 0;
+  for (let i = 0; i < 36; i++) {
+    if (i < 18) constrLoanCumulative += constrLoanMonthlyDraw;
+    const seniorAtMonth = seniorPre + constrLoanCumulative;
+    debtServiceOut[i] = seniorAtMonth * 0.065 / 12;
+  }
+
+  // ── Compute monthly NET and CUMULATIVE ──
+  const monthlyNet = new Array(36).fill(0);
   const cumulative = new Array(36).fill(0);
   let running = 0;
   for (let i = 0; i < 36; i++) {
-    running += trancheIn[i] + htcIn[i] + leaseIn[i] - constrOut[i] - debtOut[i] - opexOut[i];
+    const inflow = t2In[i] + noiIn[i] + htcIn[i] + visionsIn[i];
+    const outflow = immediateUsesOut[i] + opcoCarveOut[i] + turnoverReserveOut[i]
+                  + henryWorkOut[i] + constructionEqOut[i] + constructionCarryOut[i]
+                  + ffeOut[i] + debtServiceOut[i];
+    monthlyNet[i] = inflow - outflow;
+    running += monthlyNet[i];
     cumulative[i] = running;
   }
 
-  const x = months.map(m => m.label);
+  // ── X axis labels: quarter anchors not all 36 monthly labels ──
+  const xLabels = months.map(m => m.label);
+  const quarterTicks = [];
+  const quarterTickLabels = [];
+  months.forEach((mm, i) => {
+    if ([1, 4, 7, 10].includes(mm.m)) {
+      const q = Math.ceil(mm.m / 3);
+      quarterTicks.push(mm.label);
+      quarterTickLabels.push(`Q${q} ${mm.y}`);
+    }
+  });
 
-  const traces = [
-    {
-      type: 'bar', name: 'Tranche Capital',
-      x: x, y: trancheIn,
-      marker: { color: '#ff5252' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
-    },
-    {
-      type: 'bar', name: 'HTC Receipts',
-      x: x, y: htcIn,
-      marker: { color: '#4a8a5a' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
-    },
-    {
-      type: 'bar', name: 'Lease Revenue (NOI)',
-      x: x, y: leaseIn,
-      marker: { color: '#ff7858' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
-    },
-    {
-      type: 'bar', name: 'Construction Draws',
-      x: x, y: constrOut.map(v => -v),
-      marker: { color: '#d4a14a' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
-    },
-    {
-      type: 'bar', name: 'Debt Service',
-      x: x, y: debtOut.map(v => -v),
-      marker: { color: '#e07a3c' }, hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
-    },
-    {
-      type: 'scatter', name: 'Cumulative Cash',
-      mode: 'lines', x: x, y: cumulative,
-      line: { color: '#ff6b6b', width: 3, shape: 'spline' },
-      yaxis: 'y2',
-      hovertemplate: '%{x}: %{y:$,.0f}<extra></extra>',
-    },
-  ];
+  // ── Trough and peak detection for annotations ──
+  let troughIdx = 0, troughVal = cumulative[0];
+  cumulative.forEach((v, i) => { if (v < troughVal) { troughVal = v; troughIdx = i; } });
+
+  // ── Color discipline (Maude): brand inflows + muted outflows ──
+  const COL_T2          = '#ff5252';   // brand coral - T2 (only used for marker, not bar)
+  const COL_NOI         = '#fc2775';   // brand pink
+  const COL_HTC         = '#ff7858';   // brand warm coral
+  const COL_VISIONS     = '#d4a14a';   // mustard - distinct from brand inflows
+  const COL_OUT_RECAP   = '#5b6478';   // muted slate for recap uses
+  const COL_OUT_CONSTR  = '#7a8290';   // lighter slate for construction equity
+  const COL_OUT_DS      = '#9aa0ab';   // lighter slate for debt service
+  const COL_OUT_OPCO    = '#4a5161';   // darker slate for OpCo
+  const COL_CUMULATIVE  = '#ff5252';   // brand coral for cumulative line
 
   const tc = themeColors();
+
+  // ── Trace 1: cumulative cash (TOP subplot) ──
+  const cumulativeTrace = {
+    type: 'scatter', mode: 'lines', name: 'Cumulative Cash',
+    x: xLabels, y: cumulative,
+    fill: 'tozeroy',
+    fillcolor: 'rgba(255,82,82,0.18)',
+    line: { color: COL_CUMULATIVE, width: 2.5, shape: 'spline' },
+    xaxis: 'x', yaxis: 'y',
+    hovertemplate: '%{x}<br>Cumulative: %{y:$,.0f}<extra></extra>',
+    showlegend: false,
+  };
+
+  // ── Traces 2-N: monthly flow stacked bars (BOTTOM subplot) ──
+  const inflowTraces = [
+    { name: 'NOI (operating)',          y: noiIn,                color: COL_NOI },
+    { name: 'HTC receipts',             y: htcIn,                color: COL_HTC },
+    { name: 'Visions junior LOC draws', y: visionsIn,            color: COL_VISIONS },
+  ];
+  const outflowTraces = [
+    { name: 'Recap uses (T2 close)',    y: immediateUsesOut,     color: COL_OUT_RECAP },
+    { name: 'OpCo carve + turnover',    y: opcoCarveOut.map((v,i) => v + turnoverReserveOut[i]), color: COL_OUT_OPCO },
+    { name: '23 Henry vendor pay',      y: henryWorkOut,         color: COL_OUT_RECAP },
+    { name: 'Construction equity',      y: constructionEqOut.map((v,i) => v + constructionCarryOut[i]), color: COL_OUT_CONSTR },
+    { name: 'FF&E delivery',            y: ffeOut,               color: COL_OUT_CONSTR },
+    { name: 'Debt service',             y: debtServiceOut,       color: COL_OUT_DS },
+  ];
+
+  const barTraces = [
+    ...inflowTraces.map(t => ({
+      type: 'bar', name: t.name, x: xLabels, y: t.y,
+      marker: { color: t.color },
+      xaxis: 'x', yaxis: 'y2',
+      hovertemplate: t.name + '<br>%{x}: %{y:$,.0f}<extra></extra>',
+    })),
+    ...outflowTraces.map(t => ({
+      type: 'bar', name: t.name, x: xLabels, y: t.y.map(v => -v),
+      marker: { color: t.color },
+      xaxis: 'x', yaxis: 'y2',
+      hovertemplate: t.name + '<br>%{x}: %{y:$,.0f}<extra></extra>',
+    })),
+  ];
+
+  const traces = [cumulativeTrace, ...barTraces];
+
+  // ── Annotations: T2 close marker + trough callout + zero line ──
+  const annotations = [
+    // T2 close annotation on top subplot
+    {
+      x: xLabels[0], y: cumulative[0],
+      xref: 'x', yref: 'y',
+      text: `<b>T2 close: ${(recap/1e6).toFixed(1)}M in /<br>${(recap/1e6).toFixed(1)}M out</b><br>(sources = uses)`,
+      showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 1.5,
+      arrowcolor: COL_T2,
+      ax: 60, ay: -40,
+      font: { size: 10, color: COL_T2 },
+      bgcolor: 'rgba(255,82,82,0.10)', bordercolor: COL_T2, borderwidth: 1, borderpad: 4,
+      align: 'left',
+    },
+  ];
+  // Trough annotation if cash actually goes below zero or near zero
+  if (troughVal < cumulative[0] * 0.20) {
+    annotations.push({
+      x: xLabels[troughIdx], y: troughVal,
+      xref: 'x', yref: 'y',
+      text: `<b>Construction trough</b><br>${(troughVal/1e6).toFixed(2)}M cash<br><span style="color:#fc2775;">$2M WC LOC standby</span>`,
+      showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 1.5,
+      arrowcolor: troughVal < 0 ? '#c53030' : '#d4a14a',
+      ax: 0, ay: -50,
+      font: { size: 10, color: troughVal < 0 ? '#c53030' : '#d4a14a' },
+      bgcolor: troughVal < 0 ? 'rgba(197,48,48,0.10)' : 'rgba(212,161,74,0.10)',
+      bordercolor: troughVal < 0 ? '#c53030' : '#d4a14a',
+      borderwidth: 1, borderpad: 4,
+      align: 'center',
+    });
+  }
+
+  // ── Plotly layout: stacked subplots, no dual axis ──
   Plotly.newPlot('cashflow-chart', traces, {
     paper_bgcolor: 'transparent',
     plot_bgcolor: 'transparent',
     font: { family: 'DM Sans', color: tc.text, size: 11 },
     barmode: 'relative',
-    margin: { t: 30, r: 70, b: 70, l: 70 },
-    legend: { orientation: 'h', y: -0.25, font: { size: 10 } },
-    xaxis: { tickfont: { size: 9 }, tickangle: -60 },
+    margin: { t: 40, r: 30, b: 80, l: 80 },
+    legend: {
+      orientation: 'h', y: -0.18,
+      font: { size: 9 },
+      bgcolor: 'rgba(0,0,0,0)',
+    },
+    grid: { rows: 2, columns: 1, pattern: 'independent', roworder: 'top to bottom' },
+    xaxis: {
+      anchor: 'y2',
+      tickmode: 'array',
+      tickvals: quarterTicks,
+      ticktext: quarterTickLabels,
+      tickfont: { size: 10 },
+      tickangle: 0,
+      gridcolor: tc.grid,
+    },
     yaxis: {
-      title: 'Monthly Flow ($)',
-      tickformat: '$,.0f',
+      domain: [0.55, 1.0],
+      title: { text: 'Cumulative Foundation Cash', font: { size: 11 } },
+      tickformat: '$,.1s',
       gridcolor: tc.grid,
       tickfont: { size: 10 },
+      zeroline: true,
+      zerolinecolor: '#c53030',
+      zerolinewidth: 1.5,
     },
     yaxis2: {
-      title: 'Cumulative Cash ($)',
-      tickformat: '$,.0f',
-      overlaying: 'y',
-      side: 'right',
-      gridcolor: 'transparent',
+      domain: [0.0, 0.45],
+      title: { text: 'Monthly Net Flow', font: { size: 11 } },
+      tickformat: '$,.1s',
+      gridcolor: tc.grid,
       tickfont: { size: 10 },
+      zeroline: true,
+      zerolinecolor: tc.text,
+      zerolinewidth: 1,
     },
-    height: 360,
+    annotations: annotations,
+    height: 520,
   }, { displayModeBar: false, responsive: true });
 }
 
